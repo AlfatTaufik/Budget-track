@@ -271,7 +271,7 @@ const LoginPage = ({ onLogin }) => {
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ width: '100%', opacity: loading ? 0.7 : 1 }}
+              style={{ width: '100%', opacity: loading ? 0.7 : 1, marginBottom: 10 }}
               disabled={loading}
             >
               {loading ? (
@@ -284,11 +284,43 @@ const LoginPage = ({ onLogin }) => {
                 </>
               )}
             </button>
+
+            {/* Guest Demo Login Option */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '12px 0 10px' }}>
+              <div style={{ flex: 1, height: 1, backgroundColor: 'var(--border-subtle)' }} />
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>atau</span>
+              <div style={{ flex: 1, height: 1, backgroundColor: 'var(--border-subtle)' }} />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                onLogin({ id: 'demo_user', email: 'guest@flowwallet.app' });
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 0',
+                backgroundColor: '#FFFFFF',
+                border: '1px solid var(--border-medium)',
+                borderRadius: 'var(--radius-sm)',
+                color: 'var(--text-primary)',
+                fontWeight: 600,
+                fontSize: '0.8125rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                boxShadow: 'var(--shadow-xs)',
+              }}
+            >
+              ✨ Masuk Mode Demo (Tanpa Akun)
+            </button>
           </form>
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 14, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-          Data Anda tersinkronisasi otomatis dengan Supabase Cloud
+          Data tersinkronisasi aman dengan Supabase Cloud & Local Storage
         </p>
       </motion.div>
     </div>
