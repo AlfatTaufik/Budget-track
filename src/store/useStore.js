@@ -16,16 +16,16 @@ const useStore = create(
       setAuthLoading: (authLoading) => set({ authLoading }),
 
       // --- App State ---
-      transactions: [],
-      budgets: [],
-      goals: [],
-      investments: [],
-      walletBalances: {},
+      transactions: SAMPLE_TRANSACTIONS,
+      budgets: SAMPLE_BUDGETS.map((b) => ({ ...b, limit: 1500000 })),
+      goals: SAMPLE_GOALS,
+      investments: SAMPLE_INVESTMENTS,
+      walletBalances: SAMPLE_WALLETS_BALANCE,
       tags: DEFAULT_TAGS,
       expenseCategories: EXPENSE_CATEGORIES,
       incomeCategories: INCOME_CATEGORIES,
       balanceVisible: true,
-      dataLoaded: false,
+      dataLoaded: true,
 
       // --- Load Data from Supabase ---
       loadUserData: async (userId) => {
@@ -38,61 +38,42 @@ const useStore = create(
             db.fetchInvestments(userId),
           ]);
 
-          // Normalize Supabase column names to camelCase for store
-          const normalizedTxs = transactions.map((tx) => ({
-            ...tx,
-            amount: parseFloat(tx.amount),
-          }));
-          const normalizedBudgets = budgets.map((b) => ({
-            ...b,
-            limit: parseFloat(b.limit_amount),
-            category: b.category,
-          }));
-          const normalizedGoals = goals.map((g) => ({
-            ...g,
-            targetAmount: parseFloat(g.target_amount),
-            savedAmount: parseFloat(g.saved_amount),
-            iconName: g.icon || 'Target',
-          }));
-          const normalizedInvestments = investments.map((inv) => {
-            const typeMaps = {
-              'Saham': { icon: 'TrendingUp', color: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD' },
-              'Reksa Dana': { icon: 'Coins', color: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE' },
-              'Emas': { icon: 'ShieldCheck', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-              'Crypto': { icon: 'Sparkles', color: '#7E22CE', bg: '#FAF5FF', border: '#E9D5FF' },
-              'Properti': { icon: 'Building2', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-              'Lainnya': { icon: 'Target', color: '#52525B', bg: '#F4F4F5', border: '#E4E4E7' },
-            };
-            const mapping = typeMaps[inv.type] || typeMaps['Lainnya'];
-            return {
+          const updates = { dataLoaded: true };
+          if (transactions && transactions.length > 0) {
+            updates.transactions = transactions.map((tx) => ({
+              ...tx,
+              amount: parseFloat(tx.amount),
+            }));
+          }
+          if (budgets && budgets.length > 0) {
+            updates.budgets = budgets.map((b) => ({
+              ...b,
+              limit: parseFloat(b.limit_amount),
+              category: b.category,
+            }));
+          }
+          if (goals && goals.length > 0) {
+            updates.goals = goals.map((g) => ({
+              ...g,
+              targetAmount: parseFloat(g.target_amount),
+              savedAmount: parseFloat(g.saved_amount),
+              iconName: g.icon || 'Target',
+            }));
+          }
+          if (investments && investments.length > 0) {
+            updates.investments = investments.map((inv) => ({
               ...inv,
               amount: parseFloat(inv.amount),
-              iconName: mapping.icon,
-              color: mapping.color,
-              colorBg: mapping.bg,
-              colorBorder: mapping.border,
-            };
-          });
+            }));
+          }
+          if (walletBalances && Object.keys(walletBalances).length > 0) {
+            updates.walletBalances = walletBalances;
+          }
 
-          set({
-            transactions: normalizedTxs,
-            budgets: normalizedBudgets,
-            goals: normalizedGoals,
-            investments: normalizedInvestments,
-            walletBalances,
-            dataLoaded: true,
-          });
+          set(updates);
         } catch (error) {
-          console.error('Failed to load user data, falling back to sample data:', error);
-          // Fallback to sample data if Supabase fails (e.g., not configured yet)
-          set({
-            transactions: SAMPLE_TRANSACTIONS,
-            budgets: SAMPLE_BUDGETS.map((b) => ({ ...b, limit: 1500000 })),
-            goals: SAMPLE_GOALS,
-            walletBalances: SAMPLE_WALLETS_BALANCE,
-            investments: SAMPLE_INVESTMENTS,
-            dataLoaded: true,
-          });
+          console.warn('Preserving persisted local user data:', error);
+          set({ dataLoaded: true });
         }
       },
 
@@ -418,15 +399,13 @@ const useStore = create(
 
       // --- Logout ---
       logout: async () => {
-        await db.signOut();
+        try {
+          await db.signOut();
+        } catch (e) {
+          console.warn('Sign out:', e);
+        }
         set({
           user: null,
-          transactions: [],
-          budgets: [],
-          goals: [],
-          investments: [],
-          walletBalances: {},
-          dataLoaded: false,
         });
       },
 
@@ -544,12 +523,19 @@ const useStore = create(
     }),
     {
       name: 'flowwallet-storage',
-      version: 2,
+      version: 3,
       partialize: (state) => ({
-        balanceVisible: state.balanceVisible,
+        user: state.user,
+        transactions: state.transactions,
+        budgets: state.budgets,
+        goals: state.goals,
+        investments: state.investments,
+        walletBalances: state.walletBalances,
         tags: state.tags,
         expenseCategories: state.expenseCategories,
         incomeCategories: state.incomeCategories,
+        balanceVisible: state.balanceVisible,
+        dataLoaded: state.dataLoaded,
       }),
     }
   )
