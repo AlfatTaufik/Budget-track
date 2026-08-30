@@ -5,6 +5,11 @@ import { DEFAULT_TAGS, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../utils/ca
 import * as db from '../lib/db';
 import supabase from '../lib/supabase';
 
+// Helper to verify if user ID is a valid Supabase UUID
+const isValidUUID = (str) =>
+  typeof str === 'string' &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
 const useStore = create(
   persist(
     (set, get) => ({
@@ -29,6 +34,7 @@ const useStore = create(
 
       // --- Load Data from Supabase ---
       loadUserData: async (userId) => {
+        if (!isValidUUID(userId)) return;
         try {
           const [transactions, budgets, goals, walletBalances, investments] = await Promise.all([
             db.fetchTransactions(userId),
@@ -72,7 +78,7 @@ const useStore = create(
 
           set(updates);
         } catch (error) {
-          console.warn('Preserving persisted local user data:', error);
+          console.warn('Preserving persisted local user data on Supabase error:', error);
           set({ dataLoaded: true });
         }
       },
@@ -86,7 +92,7 @@ const useStore = create(
           date: new Date().toISOString(),
         };
 
-        // Optimistic update
+        // Instant Local Update
         set((state) => {
           const newBalances = { ...state.walletBalances };
           if (tx.type === 'expense') {
@@ -100,8 +106,8 @@ const useStore = create(
           };
         });
 
-        // Sync to Supabase if logged in
-        if (user) {
+        // Sync to Supabase if valid user
+        if (user && isValidUUID(user.id)) {
           try {
             const saved = await db.insertTransaction(
               { type: tx.type, amount: tx.amount, category: tx.category, wallet: tx.wallet, note: tx.note || null, date: newTx.date },
@@ -128,7 +134,7 @@ const useStore = create(
         set((state) => ({
           transactions: state.transactions.filter((tx) => tx.id !== id),
         }));
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             await db.deleteTransactionById(id, user.id);
           } catch (error) {
@@ -147,7 +153,7 @@ const useStore = create(
           }
           return { budgets: [...state.budgets, { id: `b_${Date.now()}`, category, limit }] };
         });
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             await db.upsertBudget(category, limit, user.id);
           } catch (error) {
@@ -184,7 +190,7 @@ const useStore = create(
           goals: [...state.goals, newGoal],
         }));
 
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             const saved = await db.insertGoal({
               name: goalData.name,
@@ -219,7 +225,7 @@ const useStore = create(
           goals: state.goals.filter((g) => g.id !== goalId),
         }));
 
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             await db.deleteGoalById(goalId, user.id);
           } catch (error) {
@@ -238,7 +244,7 @@ const useStore = create(
             g.id === goalId ? { ...g, savedAmount: newSaved } : g
           ),
         }));
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             await db.updateGoalSaved(goalId, newSaved, user.id);
           } catch (error) {
@@ -273,7 +279,7 @@ const useStore = create(
           investments: [...state.investments, newInv],
         }));
 
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             const saved = await db.insertInvestment({
               name: invData.name,
@@ -300,7 +306,7 @@ const useStore = create(
           ),
         }));
 
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             await db.updateInvestmentAmount(invId, amount, user.id);
           } catch (error) {
@@ -315,7 +321,7 @@ const useStore = create(
           investments: state.investments.filter((inv) => inv.id !== invId),
         }));
 
-        if (user) {
+        if (user && isValidUUID(user.id)) {
           try {
             await db.deleteInvestmentById(invId, user.id);
           } catch (error) {
