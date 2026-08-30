@@ -10,7 +10,7 @@ const useStore = create(
     (set, get) => ({
       // --- Auth State ---
       user: null,
-      authLoading: true,
+      authLoading: false,
 
       setUser: (user) => set({ user }),
       setAuthLoading: (authLoading) => set({ authLoading }),
@@ -544,15 +544,15 @@ const useStore = create(
 // Listen to Supabase auth state changes
 supabase.auth.onAuthStateChange(async (event, session) => {
   const store = useStore.getState();
+  store.setAuthLoading(false);
+
   if (session?.user) {
     store.setUser(session.user);
-    store.setAuthLoading(false);
     if (!store.dataLoaded) {
       await store.loadUserData(session.user.id);
     }
-  } else {
+  } else if (event === 'SIGNED_OUT') {
     store.setUser(null);
-    store.setAuthLoading(false);
   }
 });
 
