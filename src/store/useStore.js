@@ -80,10 +80,18 @@ const useStore = create(
             }),
           ]);
 
-          const formattedTxs = (transactions || []).map((tx) => ({
-            ...tx,
-            amount: parseFloat(tx.amount),
-          }));
+          const formattedTxs = (transactions || []).map((tx) => {
+            let toWallet = tx.to_wallet || tx.toWallet || null;
+            if (!toWallet && tx.type === 'transfer' && tx.note) {
+              const match = tx.note.match(/\[Transfer ke ([a-zA-Z0-9_]+)\]/);
+              if (match) toWallet = match[1];
+            }
+            return {
+              ...tx,
+              toWallet,
+              amount: parseFloat(tx.amount),
+            };
+          });
 
           const formattedBudgets = (budgets || []).map((b) => ({
             ...b,
@@ -139,8 +147,20 @@ const useStore = create(
           const newBalances = { ...state.walletBalances };
           if (tx.type === 'expense') {
             newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount;
-          } else {
+          } else if (tx.type === 'income') {
             newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) + tx.amount;
+          } else if (tx.type === 'transfer') {
+            // Transfer logic: Deduct from source, add to destination
+            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount;
+            if (tx.toWallet) {
+              let targetAmt = tx.amount;
+              if (tx.wallet === 'paypal' && tx.toWallet !== 'paypal') {
+                targetAmt = tx.amount * usdRate;
+              } else if (tx.wallet !== 'paypal' && tx.toWallet === 'paypal') {
+                targetAmt = tx.amount / usdRate;
+              }
+              newBalances[tx.toWallet] = (newBalances[tx.toWallet] || 0) + targetAmt;
+            }
           }
           return {
             transactions: [newTx, ...state.transactions],
@@ -148,13 +168,23 @@ const useStore = create(
           };
         });
 
-        get().showToast(tx.type === 'expense' ? 'Pengeluaran berhasil dicatat! ✨' : 'Pemasukan berhasil dicatat! ✨');
+        get().showToast(
+          tx.type === 'expense'
+            ? 'Pengeluaran berhasil dicatat! ✨'
+            : tx.type === 'transfer'
+            ? 'Transfer antar rekening berhasil dicatat! 🔄'
+            : 'Pemasukan berhasil dicatat! ✨'
+        );
 
         // Sync to Supabase if valid user
         if (user && isValidUUID(user.id)) {
           try {
+            const noteText = tx.type === 'transfer' && tx.toWallet
+              ? (tx.note ? `[Transfer ke ${tx.toWallet}] ${tx.note}` : `[Transfer ke ${tx.toWallet}]`)
+              : (tx.note || null);
+
             const saved = await db.insertTransaction(
-              { type: tx.type, amount: tx.amount, category: tx.category, wallet: tx.wallet, note: tx.note || null, date: newTx.date },
+              { type: tx.type, amount: tx.amount, category: tx.category || 'transfer', wallet: tx.wallet, note: noteText, date: newTx.date },
               user.id
             );
             if (saved?.id) {
@@ -165,9 +195,15 @@ const useStore = create(
               }));
             }
 
-            // Sync wallet balance to Supabase
-            const currentBalance = get().walletBalances[tx.wallet];
-            await db.upsertWalletBalance(tx.wallet, currentBalance, user.id);
+            // Sync source wallet balance
+            const currentSourceBal = get().walletBalances[tx.wallet];
+            await db.upsertWalletBalance(tx.wallet, currentSourceBal, user.id);
+
+            // If transfer, sync destination wallet balance too
+            if (tx.type === 'transfer' && tx.toWallet) {
+              const currentDestBal = get().walletBalances[tx.toWallet];
+              await db.upsertWalletBalance(tx.toWallet, currentDestBal, user.id);
+            }
           } catch (error) {
             console.error('Failed to sync transaction to Supabase:', error);
           }
@@ -176,6 +212,7 @@ const useStore = create(
 
       deleteTransaction: async (id) => {
         const user = get().user;
+        const usdRate = get().usdRate || 16250;
         const txToDelete = get().transactions.find((tx) => tx.id === id);
 
         set((state) => {
@@ -183,8 +220,20 @@ const useStore = create(
           if (txToDelete) {
             if (txToDelete.type === 'expense') {
               newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
-            } else {
+            } else if (txToDelete.type === 'income') {
               newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) - txToDelete.amount;
+            } else if (txToDelete.type === 'transfer') {
+              // Revert transfer: refund source, deduct destination
+              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
+              if (txToDelete.toWallet) {
+                let targetAmt = txToDelete.amount;
+                if (txToDelete.wallet === 'paypal' && txToDelete.toWallet !== 'paypal') {
+                  targetAmt = txToDelete.amount * usdRate;
+                } else if (txToDelete.wallet !== 'paypal' && txToDelete.toWallet === 'paypal') {
+                  targetAmt = txToDelete.amount / usdRate;
+                }
+                newBalances[txToDelete.toWallet] = (newBalances[txToDelete.toWallet] || 0) - targetAmt;
+              }
             }
           }
           return {
@@ -199,11 +248,78 @@ const useStore = create(
           try {
             await db.deleteTransactionById(id, user.id);
             if (txToDelete) {
-              const currentBalance = get().walletBalances[txToDelete.wallet];
-              await db.upsertWalletBalance(txToDelete.wallet, currentBalance, user.id);
+              const currentSourceBal = get().walletBalances[txToDelete.wallet];
+              await db.upsertWalletBalance(txToDelete.wallet, currentSourceBal, user.id);
+              if (txToDelete.type === 'transfer' && txToDelete.toWallet) {
+                const currentDestBal = get().walletBalances[txToDelete.toWallet];
+                await db.upsertWalletBalance(txToDelete.toWallet, currentDestBal, user.id);
+              }
             }
           } catch (error) {
             console.error('Failed to delete transaction from Supabase:', error);
+          }
+        }
+      },
+
+      // --- Convert Existing Transaction to Transfer ---
+      convertToTransfer: async (id, toWallet) => {
+        const user = get().user;
+        const usdRate = get().usdRate || 16250;
+        const tx = get().transactions.find((t) => t.id === id);
+        if (!tx || !toWallet || tx.wallet === toWallet) return;
+
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+          // If previous was expense, tx.wallet was already deducted.
+          // We just add funds to the destination wallet.
+          let targetAmt = tx.amount;
+          if (tx.wallet === 'paypal' && toWallet !== 'paypal') {
+            targetAmt = tx.amount * usdRate;
+          } else if (tx.wallet !== 'paypal' && toWallet === 'paypal') {
+            targetAmt = tx.amount / usdRate;
+          }
+
+          if (tx.type === 'income') {
+            // If was income: refund the fake income from source, then deduct from source & add to dest
+            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount - tx.amount;
+          }
+          newBalances[toWallet] = (newBalances[toWallet] || 0) + targetAmt;
+
+          return {
+            transactions: state.transactions.map((t) =>
+              t.id === id
+                ? {
+                    ...t,
+                    type: 'transfer',
+                    toWallet,
+                    category: 'transfer',
+                    note: t.note ? (t.note.includes('[Transfer ke') ? t.note : `[Transfer ke ${toWallet}] ${t.note}`) : `[Transfer ke ${toWallet}]`,
+                  }
+                : t
+            ),
+            walletBalances: newBalances,
+          };
+        });
+
+        get().showToast('Transaksi berhasil diubah menjadi Transfer! 🔄');
+
+        if (user && isValidUUID(user.id)) {
+          try {
+            const noteText = tx.note
+              ? (tx.note.includes('[Transfer ke') ? tx.note : `[Transfer ke ${toWallet}] ${tx.note}`)
+              : `[Transfer ke ${toWallet}]`;
+
+            await db.updateTransaction(
+              id,
+              { type: 'transfer', category: 'transfer', note: noteText },
+              user.id
+            );
+
+            // Sync updated destination wallet balance
+            const currentDestBal = get().walletBalances[toWallet];
+            await db.upsertWalletBalance(toWallet, currentDestBal, user.id);
+          } catch (error) {
+            console.error('Failed to convert transaction in Supabase:', error);
           }
         }
       },

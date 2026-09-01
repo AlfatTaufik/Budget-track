@@ -1,16 +1,27 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Trash2, Inbox, RotateCcw, X } from 'lucide-react';
+import { Search, Trash2, Inbox, RotateCcw, X, ArrowLeftRight } from 'lucide-react';
 import useStore from '../../store/useStore';
-import { getCategoryById, getWalletById } from '../../utils/categories';
+import { getCategoryById, getWalletById, WALLETS } from '../../utils/categories';
 import { formatIDR, groupByDate, isToday, isYesterday, formatDate } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
+import ConvertToTransferModal from '../Modal/ConvertToTransferModal';
 
-const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
-  const cat = getCategoryById(tx.category, extraCategories);
+const TransactionItem = ({ tx, onDelete, onConvert, extraCategories = [] }) => {
+  const isTransfer = tx.type === 'transfer';
+  const cat = isTransfer
+    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#EEF2FF' }
+    : getCategoryById(tx.category, extraCategories);
   const wallet = getWalletById(tx.wallet);
+  const destWallet = isTransfer && tx.toWallet ? getWalletById(tx.toWallet) : null;
   const isIncome = tx.type === 'income';
-  const [showDelete, setShowDelete] = useState(false);
+  const isUsd = tx.wallet === 'paypal' || tx.currency === 'USD';
+  const [showActions, setShowActions] = useState(false);
+
+  // Clean note display for transfer
+  const displayNote = isTransfer && tx.note
+    ? tx.note.replace(/^\[Transfer ke [^\]]+\]\s*/, '') || `Transfer ke ${destWallet?.label || 'Rekening'}`
+    : (tx.note || cat.label);
 
   return (
     <motion.div
@@ -26,7 +37,7 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
         borderBottom: '1px solid #F3ECE0',
         cursor: 'pointer',
       }}
-      onClick={() => setShowDelete(!showDelete)}
+      onClick={() => setShowActions(!showActions)}
     >
       <div
         style={{
@@ -41,7 +52,11 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
           flexShrink: 0,
         }}
       >
-        <AppIcon name={cat.iconName} size={18} color={cat.color} />
+        {isTransfer ? (
+          <ArrowLeftRight size={18} color="#4F46E5" />
+        ) : (
+          <AppIcon name={cat.iconName} size={18} color={cat.color} />
+        )}
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -56,23 +71,45 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
             textOverflow: 'ellipsis',
           }}
         >
-          {tx.note || cat.label}
+          {displayNote}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginTop: 2 }}>
-          <span
-            style={{
-              fontSize: '0.6875rem',
-              color: cat.color,
-              fontWeight: 600,
-              backgroundColor: cat.colorBg,
-              padding: '2px 8px',
-              borderRadius: 'var(--radius-full)',
-              border: `1px solid ${cat.color}25`,
-            }}
-          >
-            {cat.label}
-          </span>
-          <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{wallet.label}</span>
+          {isTransfer ? (
+            <span
+              style={{
+                fontSize: '0.6875rem',
+                color: '#4338CA',
+                fontWeight: 600,
+                backgroundColor: '#EEF2FF',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid #C7D2FE',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <ArrowLeftRight size={10} /> {wallet.label} ➔ {destWallet?.label || 'Rekening'}
+            </span>
+          ) : (
+            <>
+              <span
+                style={{
+                  fontSize: '0.6875rem',
+                  color: cat.color,
+                  fontWeight: 600,
+                  backgroundColor: cat.colorBg,
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-full)',
+                  border: `1px solid ${cat.color}25`,
+                }}
+              >
+                {cat.label}
+              </span>
+              <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>{wallet.label}</span>
+            </>
+          )}
+
           {tx.tags && tx.tags.map((t) => (
             <span
               key={t}
@@ -93,33 +130,65 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
       </div>
 
       <AnimatePresence mode="wait">
-        {showDelete ? (
-          <motion.button
-            key="delete"
+        {showActions ? (
+          <motion.div
+            key="actions"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm(`Hapus transaksi "${tx.note || cat.label}"?`)) {
-                onDelete(tx.id);
-              }
-            }}
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--color-expense-bg)',
-              border: '1px solid rgba(217, 106, 135, 0.3)',
-              color: 'var(--color-expense)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            onClick={(e) => e.stopPropagation()}
           >
-            <Trash2 size={15} />
-          </motion.button>
+            {!isTransfer && onConvert && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowActions(false);
+                  onConvert(tx);
+                }}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: '#EEF2FF',
+                  border: '1px solid #C7D2FE',
+                  color: '#4F46E5',
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+                title="Ubah transaksi ini jadi transfer antar rekening"
+              >
+                <ArrowLeftRight size={12} /> Ubah Transfer
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Hapus transaksi "${displayNote}"?`)) {
+                  onDelete(tx.id);
+                }
+              }}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--color-expense-bg)',
+                border: '1px solid rgba(217, 106, 135, 0.3)',
+                color: 'var(--color-expense)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              title="Hapus transaksi"
+            >
+              <Trash2 size={14} />
+            </button>
+          </motion.div>
         ) : (
           <motion.div
             key="amount"
@@ -132,13 +201,13 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
               className="amount"
               style={{
                 fontSize: '0.9375rem',
-                color: isIncome ? 'var(--color-income)' : 'var(--color-expense)',
+                color: isTransfer ? 'var(--text-primary)' : isIncome ? 'var(--color-income)' : 'var(--color-expense)',
                 fontWeight: 700,
               }}
             >
-              {isIncome ? '+' : '-'}{tx.wallet === 'paypal' || tx.currency === 'USD' ? `$ ${parseFloat(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : formatIDR(tx.amount)}
+              {isTransfer ? '🔄 ' : isIncome ? '+' : '-'}{isUsd ? `$ ${parseFloat(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : formatIDR(tx.amount)}
             </div>
-            {tx.wallet === 'paypal' || tx.currency === 'USD' ? (
+            {isUsd ? (
               <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
                 ≈ {formatIDR(parseFloat(tx.amount || 0) * (tx.exchangeRate || 16250))}
               </div>
@@ -159,6 +228,7 @@ const TransactionList = () => {
 
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');
+  const [convertTx, setConvertTx] = useState(null);
 
   const filtered = transactions.filter((tx) => {
     const cleanSearch = search.toLowerCase().replace(/^#/, '');
@@ -231,11 +301,12 @@ const TransactionList = () => {
 
       {/* Filter Tabs (Solid Pastel) + Reset Filter */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
             ['all', 'Semua'],
             ['expense', 'Pengeluaran'],
             ['income', 'Pemasukan'],
+            ['transfer', 'Transfer'],
           ].map(([val, label]) => {
             const isActive = filterType === val;
             return (
@@ -243,11 +314,11 @@ const TransactionList = () => {
                 key={val}
                 onClick={() => setFilterType(val)}
                 style={{
-                  padding: '6px 14px',
+                  padding: '6px 12px',
                   borderRadius: 'var(--radius-full)',
-                  border: `1.5px solid ${isActive ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
-                  backgroundColor: isActive ? 'var(--bg-card-subtle)' : '#FFFFFF',
-                  color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  border: `1.5px solid ${isActive ? (val === 'transfer' ? '#4F46E5' : 'var(--text-primary)') : 'var(--border-subtle)'}`,
+                  backgroundColor: isActive ? (val === 'transfer' ? '#EEF2FF' : 'var(--bg-card-subtle)') : '#FFFFFF',
+                  color: isActive ? (val === 'transfer' ? '#4338CA' : 'var(--text-primary)') : 'var(--text-secondary)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -299,8 +370,7 @@ const TransactionList = () => {
                 width: 56,
                 height: 56,
                 borderRadius: 'var(--radius-lg)',
-                backgroundColor: '#FFFFFF',
-                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-card-subtle)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -322,19 +392,38 @@ const TransactionList = () => {
                 </span>
                 <span className="amount" style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
                   {formatIDR(
-                    txs.reduce((sum, tx) => sum + (tx.type === 'expense' ? -tx.amount : tx.amount), 0)
+                    txs.reduce((sum, tx) => {
+                      if (tx.type === 'transfer') return sum;
+                      return sum + (tx.type === 'expense' ? -tx.amount : tx.amount);
+                    }, 0)
                   )}
                 </span>
               </div>
               <div className="glass-card" style={{ padding: '0 16px' }}>
                 <AnimatePresence>
                   {txs.map((tx) => (
-                    <TransactionItem key={tx.id} tx={tx} onDelete={deleteTransaction} extraCategories={allCategories} />
+                    <TransactionItem
+                      key={tx.id}
+                      tx={tx}
+                      onDelete={deleteTransaction}
+                      onConvert={setConvertTx}
+                      extraCategories={allCategories}
+                    />
                   ))}
                 </AnimatePresence>
               </div>
             </motion.div>
           ))
+        )}
+      </AnimatePresence>
+
+      {/* Convert to Transfer Modal */}
+      <AnimatePresence>
+        {convertTx && (
+          <ConvertToTransferModal
+            tx={convertTx}
+            onClose={() => setConvertTx(null)}
+          />
         )}
       </AnimatePresence>
     </div>
