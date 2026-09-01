@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X, Undo2 } from 'lucide-react';
 import useStore from '../../store/useStore';
 
 const Toast = () => {
@@ -24,27 +24,57 @@ const Toast = () => {
             zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
-            padding: '10px 16px',
+            gap: 10,
+            padding: '8px 14px 8px 16px',
             borderRadius: 'var(--radius-full)',
             backgroundColor: toast.type === 'error' ? '#FFF1F2' : '#18181B',
             color: toast.type === 'error' ? '#9F1239' : '#FFFFFF',
             border: toast.type === 'error' ? '1px solid #FECDD3' : '1px solid #27272A',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
             fontSize: '0.8125rem',
             fontWeight: 600,
-            maxWidth: '90vw',
+            maxWidth: '92vw',
           }}
         >
           {toast.type === 'error' ? (
-            <AlertCircle size={16} color="#E11D48" />
+            <AlertCircle size={16} color="#E11D48" style={{ flexShrink: 0 }} />
           ) : toast.type === 'info' ? (
-            <Info size={16} color="#38BDF8" />
+            <Info size={16} color="#38BDF8" style={{ flexShrink: 0 }} />
           ) : (
-            <CheckCircle2 size={16} color="#34D399" />
+            <CheckCircle2 size={16} color="#34D399" style={{ flexShrink: 0 }} />
           )}
 
-          <span>{toast.message}</span>
+          <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {toast.message}
+          </span>
+
+          {toast.action && (
+            <button
+              type="button"
+              onClick={() => {
+                toast.action.onClick?.();
+                hideToast();
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '4px 10px',
+                borderRadius: 'var(--radius-full)',
+                backgroundColor: '#3B82F6',
+                color: '#FFFFFF',
+                border: 'none',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                flexShrink: 0,
+                transition: 'all 0.15s',
+              }}
+            >
+              <Undo2 size={12} /> {toast.action.label || 'Undo'}
+            </button>
+          )}
 
           <button
             onClick={hideToast}
@@ -56,7 +86,7 @@ const Toast = () => {
               display: 'flex',
               alignItems: 'center',
               padding: 2,
-              marginLeft: 4,
+              flexShrink: 0,
             }}
             aria-label="Tutup notifikasi"
           >
@@ -69,3 +99,4 @@ const Toast = () => {
 };
 
 export default Toast;
+

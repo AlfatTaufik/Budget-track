@@ -27,14 +27,14 @@ const useStore = create(
 
       // --- Toast Notification State ---
       toast: null,
-      showToast: (message, type = 'success') => {
+      showToast: (message, type = 'success', action = null, duration = 3500) => {
         const id = Date.now();
-        set({ toast: { message, type, id } });
+        set({ toast: { message, type, action, id } });
         setTimeout(() => {
           if (get().toast?.id === id) {
             set({ toast: null });
           }
-        }, 3000);
+        }, duration);
       },
       hideToast: () => set({ toast: null }),
 
@@ -218,26 +218,26 @@ const useStore = create(
         const user = get().user;
         const usdRate = get().usdRate || 16250;
         const txToDelete = get().transactions.find((tx) => tx.id === id);
+        if (!txToDelete) return;
+        const previousTx = { ...txToDelete };
 
         set((state) => {
           const newBalances = { ...state.walletBalances };
-          if (txToDelete) {
-            if (txToDelete.type === 'expense') {
-              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
-            } else if (txToDelete.type === 'income') {
-              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) - txToDelete.amount;
-            } else if (txToDelete.type === 'transfer') {
-              // Revert transfer: refund source, deduct destination
-              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
-              if (txToDelete.toWallet) {
-                let targetAmt = txToDelete.amount;
-                if (txToDelete.wallet === 'paypal' && txToDelete.toWallet !== 'paypal') {
-                  targetAmt = txToDelete.amount * usdRate;
-                } else if (txToDelete.wallet !== 'paypal' && txToDelete.toWallet === 'paypal') {
-                  targetAmt = txToDelete.amount / usdRate;
-                }
-                newBalances[txToDelete.toWallet] = (newBalances[txToDelete.toWallet] || 0) - targetAmt;
+          if (txToDelete.type === 'expense') {
+            newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
+          } else if (txToDelete.type === 'income') {
+            newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) - txToDelete.amount;
+          } else if (txToDelete.type === 'transfer') {
+            // Revert transfer: refund source, deduct destination
+            newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
+            if (txToDelete.toWallet) {
+              let targetAmt = txToDelete.amount;
+              if (txToDelete.wallet === 'paypal' && txToDelete.toWallet !== 'paypal') {
+                targetAmt = txToDelete.amount * usdRate;
+              } else if (txToDelete.wallet !== 'paypal' && txToDelete.toWallet === 'paypal') {
+                targetAmt = txToDelete.amount / usdRate;
               }
+              newBalances[txToDelete.toWallet] = (newBalances[txToDelete.toWallet] || 0) - targetAmt;
             }
           }
           return {
@@ -246,18 +246,27 @@ const useStore = create(
           };
         });
 
-        get().showToast('Transaksi berhasil dihapus.');
+        // Provide an interactive Undo toast!
+        get().showToast(
+          'Transaksi berhasil dihapus.',
+          'info',
+          {
+            label: 'Batalkan (Undo)',
+            onClick: async () => {
+              await get().addTransaction(previousTx);
+            },
+          },
+          5000
+        );
 
         if (user && isValidUUID(user.id)) {
           try {
             await db.deleteTransactionById(id, user.id);
-            if (txToDelete) {
-              const currentSourceBal = get().walletBalances[txToDelete.wallet];
-              await db.upsertWalletBalance(txToDelete.wallet, currentSourceBal, user.id);
-              if (txToDelete.type === 'transfer' && txToDelete.toWallet) {
-                const currentDestBal = get().walletBalances[txToDelete.toWallet];
-                await db.upsertWalletBalance(txToDelete.toWallet, currentDestBal, user.id);
-              }
+            const currentSourceBal = get().walletBalances[txToDelete.wallet];
+            await db.upsertWalletBalance(txToDelete.wallet, currentSourceBal, user.id);
+            if (txToDelete.type === 'transfer' && txToDelete.toWallet) {
+              const currentDestBal = get().walletBalances[txToDelete.toWallet];
+              await db.upsertWalletBalance(txToDelete.toWallet, currentDestBal, user.id);
             }
           } catch (error) {
             console.error('Failed to delete transaction from Supabase:', error);
@@ -351,10 +360,26 @@ const useStore = create(
 
       deleteBudget: async (category) => {
         const user = get().user;
+        const bToDelete = get().budgets.find((b) => b.category === category);
+        const prevBudget = bToDelete ? { ...bToDelete } : null;
+
         set((state) => ({
           budgets: state.budgets.filter((b) => b.category !== category),
         }));
-        get().showToast('Jatah amplop berhasil dihapus.');
+
+        get().showToast(
+          'Jatah amplop berhasil dihapus.',
+          'info',
+          prevBudget
+            ? {
+                label: 'Batalkan (Undo)',
+                onClick: async () => {
+                  await get().setBudget(prevBudget.category, prevBudget.limit);
+                },
+              }
+            : null,
+          5000
+        );
 
         if (user && isValidUUID(user.id)) {
           try {
@@ -413,10 +438,25 @@ const useStore = create(
 
       deleteGoal: async (goalId) => {
         const user = get().user;
+        const goalToDelete = get().goals.find((g) => g.id === goalId);
+        if (!goalToDelete) return;
+        const prevGoal = { ...goalToDelete };
+
         set((state) => ({
           goals: state.goals.filter((g) => g.id !== goalId),
         }));
-        get().showToast('Kantong tabungan berhasil dihapus.');
+
+        get().showToast(
+          'Kantong tabungan berhasil dihapus.',
+          'info',
+          {
+            label: 'Batalkan (Undo)',
+            onClick: async () => {
+              await get().addGoal(prevGoal);
+            },
+          },
+          5000
+        );
 
         if (user && isValidUUID(user.id)) {
           try {
@@ -621,10 +661,25 @@ const useStore = create(
 
       deleteInvestment: async (invId) => {
         const user = get().user;
+        const invToDelete = get().investments.find((i) => i.id === invId);
+        if (!invToDelete) return;
+        const prevInv = { ...invToDelete };
+
         set((state) => ({
           investments: state.investments.filter((inv) => inv.id !== invId),
         }));
-        get().showToast('Aset investasi berhasil dihapus.');
+
+        get().showToast(
+          'Aset investasi berhasil dihapus.',
+          'info',
+          {
+            label: 'Batalkan (Undo)',
+            onClick: async () => {
+              await get().addInvestment({ ...prevInv, sourceWallet: 'none' });
+            },
+          },
+          5000
+        );
 
         if (user && isValidUUID(user.id)) {
           try {
