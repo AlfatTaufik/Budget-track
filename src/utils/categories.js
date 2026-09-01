@@ -26,6 +26,7 @@ export const WALLETS = [
   { id: 'cash', label: 'Tunai', iconName: 'Banknote', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },
   { id: 'bca', label: 'BCA', iconName: 'Building2', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE6FD' },
   { id: 'mandiri', label: 'Mandiri', iconName: 'Building2', color: '#D97706', colorBg: '#FFFBEB', colorBorder: '#FDE68A' },
+  { id: 'paypal', label: 'PayPal', iconName: 'CreditCard', color: '#0079C1', colorBg: '#F0F7FF', colorBorder: '#BAE0FD' },
   { id: 'gopay', label: 'GoPay', iconName: 'Smartphone', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },
   { id: 'ovo', label: 'OVO', iconName: 'Smartphone', color: '#7E22CE', colorBg: '#FAF5FF', colorBorder: '#E9D5FF' },
   { id: 'shopeepay', label: 'ShopeePay', iconName: 'CreditCard', color: '#EA580C', colorBg: '#FFF7ED', colorBorder: '#FED7AA' },
