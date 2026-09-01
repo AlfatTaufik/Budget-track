@@ -185,3 +185,19 @@ export const getCurrentUser = async () => {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 };
+
+// ── Permanent Data Wipe ───────────────────────────────
+export const deleteAllUserData = async (userId) => {
+  const tables = ['transactions', 'budgets', 'goals', 'investments', 'wallet_balances'];
+  await Promise.allSettled(
+    tables.map(async (table) => {
+      const { error } = await supabase
+        .from(table)
+        .delete()
+        .eq('user_id', userId);
+      if (error) {
+        console.warn(`Error wiping ${table} for user ${userId}:`, error);
+      }
+    })
+  );
+};

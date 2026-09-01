@@ -486,7 +486,10 @@ const useStore = create(
         get().showToast('Data berhasil dikosongkan.');
       },
 
-      resetAllData: () => {
+      resetAllData: async () => {
+        const user = get().user;
+
+        // Instant local reset
         set({
           transactions: [],
           budgets: [],
@@ -495,7 +498,17 @@ const useStore = create(
           walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           dataLoaded: true,
         });
-        get().showToast('Semua data berhasil dikosongkan.');
+
+        get().showToast('Semua data berhasil dikosongkan permanen.');
+
+        // Wipe permanently from Supabase Cloud Database if authenticated user
+        if (user && isValidUUID(user.id)) {
+          try {
+            await db.deleteAllUserData(user.id);
+          } catch (error) {
+            console.error('Failed to permanently wipe database on Supabase:', error);
+          }
+        }
       },
 
       // --- Logout ---

@@ -145,9 +145,9 @@ const Header = ({ activePage }) => {
 
 
                   <button
-                    onClick={() => {
-                      if (window.confirm('Kosongkan semua data transaksi, target, dan investasi?')) {
-                        resetAllData();
+                    onClick={async () => {
+                      if (window.confirm('PERINGATAN: Apakah Anda yakin ingin menghapus SEMUA data transaksi, kantong tabungan, amplop, dan investasi secara permanen dari aplikasi dan database cloud?')) {
+                        await resetAllData();
                         setShowMenu(false);
                       }
                     }}
@@ -161,7 +161,7 @@ const Header = ({ activePage }) => {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: 'var(--text-secondary)',
+                      color: 'var(--color-expense, #E11D48)',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       transition: 'background 0.15s',
@@ -169,8 +169,8 @@ const Header = ({ activePage }) => {
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-card-subtle)')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <Trash2 size={13} />
-                    Kosongkan Semua Data
+                    <Trash2 size={13} color="var(--color-expense, #E11D48)" />
+                    Reset Data Permanen
                   </button>
 
                   <div style={{ height: 1, backgroundColor: 'var(--border-subtle)', margin: '4px 0' }} />

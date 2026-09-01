@@ -87,10 +87,12 @@ CREATE POLICY "Users can delete own transactions" ON transactions FOR DELETE USI
 DROP POLICY IF EXISTS "Users can view own budgets" ON budgets;
 DROP POLICY IF EXISTS "Users can upsert own budgets" ON budgets;
 DROP POLICY IF EXISTS "Users can update own budgets" ON budgets;
+DROP POLICY IF EXISTS "Users can delete own budgets" ON budgets;
 
 CREATE POLICY "Users can view own budgets" ON budgets FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can upsert own budgets" ON budgets FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own budgets" ON budgets FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own budgets" ON budgets FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies untuk goals
 DROP POLICY IF EXISTS "Users can view own goals" ON goals;
@@ -107,10 +109,12 @@ CREATE POLICY "Users can delete own goals" ON goals FOR DELETE USING (auth.uid()
 DROP POLICY IF EXISTS "Users can view own wallet balances" ON wallet_balances;
 DROP POLICY IF EXISTS "Users can upsert own wallet balances" ON wallet_balances;
 DROP POLICY IF EXISTS "Users can update own wallet balances" ON wallet_balances;
+DROP POLICY IF EXISTS "Users can delete own wallet balances" ON wallet_balances;
 
 CREATE POLICY "Users can view own wallet balances" ON wallet_balances FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can upsert own wallet balances" ON wallet_balances FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own wallet balances" ON wallet_balances FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own wallet balances" ON wallet_balances FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies untuk investments
 DROP POLICY IF EXISTS "Users can view own investments" ON investments;
