@@ -172,16 +172,34 @@ const useStore = create(
 
       deleteTransaction: async (id) => {
         const user = get().user;
-        set((state) => ({
-          transactions: state.transactions.filter((tx) => tx.id !== id),
-        }));
+        const txToDelete = get().transactions.find((tx) => tx.id === id);
+
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+          if (txToDelete) {
+            if (txToDelete.type === 'expense') {
+              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
+            } else {
+              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) - txToDelete.amount;
+            }
+          }
+          return {
+            transactions: state.transactions.filter((tx) => tx.id !== id),
+            walletBalances: newBalances,
+          };
+        });
+
         get().showToast('Transaksi berhasil dihapus.');
 
         if (user && isValidUUID(user.id)) {
           try {
             await db.deleteTransactionById(id, user.id);
+            if (txToDelete) {
+              const currentBalance = get().walletBalances[txToDelete.wallet];
+              await db.upsertWalletBalance(txToDelete.wallet, currentBalance, user.id);
+            }
           } catch (error) {
-            console.error('Failed to delete from Supabase:', error);
+            console.error('Failed to delete transaction from Supabase:', error);
           }
         }
       },

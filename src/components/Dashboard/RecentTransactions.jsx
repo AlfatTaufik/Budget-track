@@ -1,28 +1,34 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronRight, Trash2 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { getCategoryById, getWalletById } from '../../utils/categories';
 import { formatIDR, formatDateShort } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 
-const TransactionItem = ({ tx, style, extraCategories = [] }) => {
+const TransactionItem = ({ tx, style, extraCategories = [], onDelete }) => {
   const cat = getCategoryById(tx.category, extraCategories);
   const wallet = getWalletById(tx.wallet);
   const isIncome = tx.type === 'income';
+  const [showDelete, setShowDelete] = useState(false);
 
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, x: -16, height: 0 }}
       style={{
         display: 'flex',
         alignItems: 'center',
         gap: 12,
         padding: '11px 0',
         borderBottom: '1px solid #F3ECE0',
+        cursor: 'pointer',
         ...style,
       }}
+      onClick={() => setShowDelete(!showDelete)}
+      title="Klik untuk opsi hapus transaksi"
     >
       {/* Lucide Solid Pastel Icon Box */}
       <div
@@ -82,28 +88,68 @@ const TransactionItem = ({ tx, style, extraCategories = [] }) => {
         </div>
       </div>
 
-      {/* Amount */}
-      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-        <div
-          className="amount"
-          style={{
-            fontSize: '0.9375rem',
-            color: isIncome ? 'var(--color-income)' : 'var(--color-expense)',
-            fontWeight: 700,
-          }}
-        >
-          {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
-        </div>
-        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-          {formatDateShort(tx.date)}
-        </div>
-      </div>
+      {/* Amount or Delete Button */}
+      <AnimatePresence mode="wait">
+        {showDelete && onDelete ? (
+          <motion.button
+            key="delete"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm(`Hapus transaksi "${tx.note || cat.label}"?`)) {
+                onDelete(tx.id);
+              }
+            }}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: '#FFF1F2',
+              border: '1px solid #FECDD3',
+              color: '#E11D48',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+            title="Hapus transaksi ini"
+          >
+            <Trash2 size={15} />
+          </motion.button>
+        ) : (
+          <motion.div
+            key="amount"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.8, opacity: 0 }}
+            style={{ textAlign: 'right', flexShrink: 0 }}
+          >
+            <div
+              className="amount"
+              style={{
+                fontSize: '0.9375rem',
+                color: isIncome ? 'var(--color-income)' : 'var(--color-expense)',
+                fontWeight: 700,
+              }}
+            >
+              {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
+            </div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+              {formatDateShort(tx.date)}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
 
 const RecentTransactions = ({ onViewAll }) => {
   const transactions = useStore((s) => s.transactions);
+  const deleteTransaction = useStore((s) => s.deleteTransaction);
   const expenseCategories = useStore((s) => s.expenseCategories || []);
   const incomeCategories = useStore((s) => s.incomeCategories || []);
   const allCategories = [...expenseCategories, ...incomeCategories];
@@ -147,7 +193,7 @@ const RecentTransactions = ({ onViewAll }) => {
         </div>
       ) : (
         recent.map((tx) => (
-          <TransactionItem key={tx.id} tx={tx} extraCategories={allCategories} />
+          <TransactionItem key={tx.id} tx={tx} extraCategories={allCategories} onDelete={deleteTransaction} />
         ))
       )}
     </motion.div>

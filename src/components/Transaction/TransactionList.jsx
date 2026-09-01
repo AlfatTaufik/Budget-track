@@ -101,7 +101,9 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
             exit={{ scale: 0.8, opacity: 0 }}
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(tx.id);
+              if (window.confirm(`Hapus transaksi "${tx.note || cat.label}"?`)) {
+                onDelete(tx.id);
+              }
             }}
             style={{
               width: 36,
