@@ -102,29 +102,26 @@ const useStore = create(
             }
           }
 
-          let formattedBudgets = current.budgets;
-          if (budgets !== null && budgets.length > 0) {
-            formattedBudgets = budgets.map((b) => ({ ...b, limit: parseFloat(b.limit_amount), category: b.category }));
-          }
+          let formattedBudgets = budgets !== null
+            ? budgets.map((b) => ({ ...b, limit: parseFloat(b.limit_amount), category: b.category }))
+            : current.budgets;
 
-          let formattedGoals = current.goals;
-          if (goals !== null && goals.length > 0) {
-            formattedGoals = goals.map((g) => ({
-              ...g,
-              targetAmount: parseFloat(g.target_amount),
-              savedAmount: parseFloat(g.saved_amount),
-              iconName: g.icon || 'Target',
-              color: g.color || '#4F46E5',
-            }));
-          }
+          let formattedGoals = goals !== null
+            ? goals.map((g) => ({
+                ...g,
+                targetAmount: parseFloat(g.target_amount),
+                savedAmount: parseFloat(g.saved_amount),
+                iconName: g.icon || 'Target',
+                color: g.color || '#4F46E5',
+              }))
+            : current.goals;
 
-          let formattedInvestments = current.investments;
-          if (investments !== null && investments.length > 0) {
-            formattedInvestments = investments.map((inv) => ({ ...inv, amount: parseFloat(inv.amount) }));
-          }
+          let formattedInvestments = investments !== null
+            ? investments.map((inv) => ({ ...inv, amount: parseFloat(inv.amount) }))
+            : current.investments;
 
-          const defaultBalances = { bca: 0, gopay: 0, ovo: 0, cash: 0 };
-          const mergedBalances = walletBalances && Object.keys(walletBalances).length > 0
+          const defaultBalances = { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 };
+          const mergedBalances = walletBalances !== null
             ? { ...defaultBalances, ...walletBalances }
             : current.walletBalances;
 
