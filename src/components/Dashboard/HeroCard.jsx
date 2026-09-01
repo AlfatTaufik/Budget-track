@@ -13,8 +13,7 @@ const HeroCard = () => {
   const getTotalInvestments = useStore((s) => s.getTotalInvestments);
   const getMonthlyStats = useStore((s) => s.getMonthlyStats);
   const balanceVisible = useStore((s) => s.balanceVisible);
-  const toggleBalanceVisible = useStore((s) => s.toggleBalanceVisible);
-  const walletBalances = useStore((s) => s.walletBalances);
+  const getWalletBalances = useStore((s) => s.getWalletBalances);
 
   const [showInfoModal, setShowInfoModal] = useState(false);
 
@@ -23,6 +22,7 @@ const HeroCard = () => {
   const totalGoals = getTotalGoalsSaved();
   const totalInvestments = getTotalInvestments();
   const { income, expense } = getMonthlyStats();
+  const walletBalances = getWalletBalances();
   const MASK = '••••••';
 
   return (
