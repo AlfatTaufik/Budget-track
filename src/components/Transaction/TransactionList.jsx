@@ -227,8 +227,18 @@ const TransactionList = () => {
   const allCategories = [...expenseCategories, ...incomeCategories];
 
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState('all');
+  const [filterType, setFilterType] = useState('all'); // all | expense | income | transfer
+  const [filterCategory, setFilterCategory] = useState('all');
   const [convertTx, setConvertTx] = useState(null);
+
+  // Available categories based on active filterType
+  const availableFilterCategories = filterType === 'expense'
+    ? expenseCategories
+    : filterType === 'income'
+    ? incomeCategories
+    : filterType === 'transfer'
+    ? []
+    : allCategories;
 
   const filtered = transactions.filter((tx) => {
     const cleanSearch = search.toLowerCase().replace(/^#/, '');
@@ -238,7 +248,8 @@ const TransactionList = () => {
       getCategoryById(tx.category, allCategories).label.toLowerCase().includes(cleanSearch) ||
       tx.tags?.some((t) => t.toLowerCase().includes(cleanSearch));
     const matchType = filterType === 'all' || tx.type === filterType;
-    return matchSearch && matchType;
+    const matchCategory = filterCategory === 'all' || tx.category === filterCategory;
+    return matchSearch && matchType && matchCategory;
   });
 
   const grouped = groupByDate(filtered);
@@ -249,6 +260,19 @@ const TransactionList = () => {
     return formatDate(dateKey);
   };
 
+  const handleTypeChange = (newType) => {
+    setFilterType(newType);
+    setFilterCategory('all');
+  };
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setFilterType('all');
+    setFilterCategory('all');
+  };
+
+  const isFiltering = search !== '' || filterType !== 'all' || filterCategory !== 'all';
+
   return (
     <div className="page">
       <div className="page-header">
@@ -256,7 +280,7 @@ const TransactionList = () => {
       </div>
 
       {/* Search Bar */}
-      <div style={{ position: 'relative', marginBottom: 12 }}>
+      <div style={{ position: 'relative', marginBottom: 10 }}>
         <Search
           size={16}
           style={{
@@ -269,7 +293,7 @@ const TransactionList = () => {
         />
         <input
           type="text"
-          placeholder="Cari transaksi atau kategori..."
+          placeholder="Cari transaksi, kategori, atau #tag..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={{ paddingLeft: 40, paddingRight: search ? 36 : 14 }}
@@ -299,8 +323,8 @@ const TransactionList = () => {
         )}
       </div>
 
-      {/* Filter Tabs (Solid Pastel) + Reset Filter */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+      {/* Primary Type Filter Tabs */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
             ['all', 'Semua'],
@@ -312,9 +336,9 @@ const TransactionList = () => {
             return (
               <button
                 key={val}
-                onClick={() => setFilterType(val)}
+                onClick={() => handleTypeChange(val)}
                 style={{
-                  padding: '6px 12px',
+                  padding: '5px 11px',
                   borderRadius: 'var(--radius-full)',
                   border: `1.5px solid ${isActive ? (val === 'transfer' ? '#4F46E5' : 'var(--text-primary)') : 'var(--border-subtle)'}`,
                   backgroundColor: isActive ? (val === 'transfer' ? '#EEF2FF' : 'var(--bg-card-subtle)') : '#FFFFFF',
@@ -331,17 +355,14 @@ const TransactionList = () => {
           })}
         </div>
 
-        {(search !== '' || filterType !== 'all') && (
+        {isFiltering && (
           <button
-            onClick={() => {
-              setSearch('');
-              setFilterType('all');
-            }}
+            onClick={handleResetFilters}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 4,
-              padding: '5px 10px',
+              padding: '4px 9px',
               borderRadius: 'var(--radius-full)',
               border: '1px solid var(--border-subtle)',
               backgroundColor: '#FFFFFF',
@@ -352,10 +373,81 @@ const TransactionList = () => {
               transition: 'all 0.15s',
             }}
           >
-            <RotateCcw size={11} /> Reset Filter
+            <RotateCcw size={11} /> Reset
           </button>
         )}
       </div>
+
+      {/* Category Filter Chips Bar (Horizontal Scroll) */}
+      {availableFilterCategories.length > 0 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            paddingBottom: 6,
+            marginBottom: 12,
+            scrollbarWidth: 'none',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setFilterCategory('all')}
+            style={{
+              flexShrink: 0,
+              padding: '4px 9px',
+              borderRadius: 'var(--radius-full)',
+              border: `1px solid ${filterCategory === 'all' ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+              backgroundColor: filterCategory === 'all' ? 'var(--text-primary)' : '#FFFFFF',
+              color: filterCategory === 'all' ? '#FFFFFF' : 'var(--text-secondary)',
+              fontSize: '0.6875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+          >
+            Semua Jenis
+          </button>
+          {availableFilterCategories.map((cat) => {
+            const isSelected = filterCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setFilterCategory(isSelected ? 'all' : cat.id)}
+                style={{
+                  flexShrink: 0,
+                  padding: '4px 9px',
+                  borderRadius: 'var(--radius-full)',
+                  border: `1.5px solid ${isSelected ? cat.color : 'var(--border-subtle)'}`,
+                  backgroundColor: isSelected ? cat.colorBg : '#FFFFFF',
+                  color: isSelected ? cat.color : 'var(--text-secondary)',
+                  fontSize: '0.6875rem',
+                  fontWeight: isSelected ? 700 : 500,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s',
+                }}
+              >
+                <AppIcon name={cat.iconName} size={11} color={isSelected ? cat.color : '#71717A'} />
+                {cat.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Filter Result Stats Header */}
+      {isFiltering && (
+        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
+          <span>Ditemukan <strong>{filtered.length}</strong> transaksi</span>
+          {filterCategory !== 'all' && (
+            <span>Kategori: <strong>{getCategoryById(filterCategory, allCategories).label}</strong></span>
+          )}
+        </div>
+      )}
 
       {/* Transaction Groups */}
       <AnimatePresence>
