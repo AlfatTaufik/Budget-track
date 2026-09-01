@@ -470,9 +470,37 @@ const useStore = create(
           colorBorder: mapping.border,
         };
 
-        set((state) => ({
-          investments: [...state.investments, newInv],
-        }));
+        const sourceWallet = invData.sourceWallet;
+        const usdRate = get().usdRate || 16250;
+
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+          let newTxs = state.transactions;
+
+          if (sourceWallet && sourceWallet !== 'none') {
+            const deductAmt = sourceWallet === 'paypal' ? invData.amount / usdRate : invData.amount;
+            newBalances[sourceWallet] = (newBalances[sourceWallet] || 0) - deductAmt;
+
+            const transferTx = {
+              id: `tx_${Date.now()}`,
+              type: 'transfer',
+              category: 'transfer',
+              amount: deductAmt,
+              wallet: sourceWallet,
+              toWallet: 'investasi',
+              note: `Investasi: ${invData.name} (${invData.type})`,
+              date: new Date().toISOString(),
+            };
+            newTxs = [transferTx, ...state.transactions];
+          }
+
+          return {
+            investments: [...state.investments, newInv],
+            walletBalances: newBalances,
+            transactions: newTxs,
+          };
+        });
+
         get().showToast('Aset investasi berhasil disimpan! 📈');
 
         if (user && isValidUUID(user.id)) {
@@ -489,6 +517,20 @@ const useStore = create(
                   inv.id === tempId ? { ...inv, id: saved.id, amount: parseFloat(saved.amount) } : inv
                 ),
               }));
+            }
+
+            if (sourceWallet && sourceWallet !== 'none') {
+              const currentBal = get().walletBalances[sourceWallet];
+              await db.upsertWalletBalance(sourceWallet, currentBal, user.id);
+              const deductAmt = sourceWallet === 'paypal' ? invData.amount / usdRate : invData.amount;
+              await db.insertTransaction({
+                type: 'transfer',
+                amount: deductAmt,
+                category: 'transfer',
+                wallet: sourceWallet,
+                note: `[Transfer ke Investasi] Beli ${invData.name}`,
+                date: new Date().toISOString(),
+              }, user.id).catch(console.warn);
             }
           } catch (error) {
             console.error('Failed to sync new investment to Supabase:', error);
