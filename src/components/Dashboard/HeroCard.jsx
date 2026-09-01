@@ -15,6 +15,7 @@ const HeroCard = () => {
   const balanceVisible = useStore((s) => s.balanceVisible);
   const toggleBalanceVisible = useStore((s) => s.toggleBalanceVisible);
   const walletBalances = useStore((s) => s.walletBalances) || {};
+  const usdRate = useStore((s) => s.usdRate) || 16250;
 
   const [showInfoModal, setShowInfoModal] = useState(false);
 
@@ -219,7 +220,7 @@ const HeroCard = () => {
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>
               💡 Komponen Total Kekayaan (Net Worth):
             </div>
-            <div>• <strong>Kas/Dompet:</strong> Saldo rekening & e-wallet harian (terpotong saat belanja).</div>
+            <div>• <strong>Kas/Dompet:</strong> Saldo rekening & e-wallet harian (termasuk PayPal dikonversi ke Rupiah dengan kurs live $1 = {formatIDR(usdRate)}).</div>
             <div>• <strong>Tabungan:</strong> Dana di pos kantong target tabungan Anda.</div>
             <div>• <strong>Investasi:</strong> Nilai portofolio (Saham, Reksa Dana, Emas) yang aman & tidak terpakai saat belanja.</div>
           </motion.div>
@@ -261,6 +262,11 @@ const HeroCard = () => {
             <span className="amount" style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 700 }}>
               {balanceVisible ? formatWalletAmount(walletBalances[wallet.id], wallet.id) : '••••'}
             </span>
+            {wallet.currency === 'USD' && balanceVisible && (
+              <span style={{ fontSize: '0.6875rem', color: '#0079C1', backgroundColor: '#F0F7FF', border: '1px solid #BAE0FD', padding: '1px 6px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
+                ≈ {formatIDR((walletBalances[wallet.id] || 0) * usdRate)}
+              </span>
+            )}
           </div>
         ))}
       </div>
