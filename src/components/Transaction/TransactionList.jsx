@@ -136,8 +136,13 @@ const TransactionItem = ({ tx, onDelete, extraCategories = [] }) => {
                 fontWeight: 700,
               }}
             >
-              {isIncome ? '+' : '-'}{formatIDR(tx.amount)}
+              {isIncome ? '+' : '-'}{tx.wallet === 'paypal' || tx.currency === 'USD' ? `$ ${parseFloat(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : formatIDR(tx.amount)}
             </div>
+            {tx.wallet === 'paypal' || tx.currency === 'USD' ? (
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                ≈ {formatIDR(parseFloat(tx.amount || 0) * (tx.exchangeRate || 16250))}
+              </div>
+            ) : null}
           </motion.div>
         )}
       </AnimatePresence>

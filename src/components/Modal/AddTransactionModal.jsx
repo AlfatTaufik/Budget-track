@@ -148,6 +148,10 @@ const AddTransactionModal = ({ onClose }) => {
     setCategory(targetCats[0]?.id || 'other');
   };
 
+  const usdRate = useStore((s) => s.usdRate || 16250);
+  const selectedWalletObj = WALLETS.find((w) => w.id === wallet);
+  const isUsd = selectedWalletObj?.currency === 'USD';
+
   return (
     <>
       <motion.div
@@ -219,7 +223,7 @@ const AddTransactionModal = ({ onClose }) => {
                 exit={{ opacity: 0, x: -16 }}
               >
                 {/* Type Switcher */}
-                <div style={{ padding: '0 18px 14px' }}>
+                <div style={{ padding: '0 18px 8px' }}>
                   <div
                     style={{
                       display: 'flex',
@@ -276,16 +280,53 @@ const AddTransactionModal = ({ onClose }) => {
                   </div>
                 </div>
 
+                {/* Quick Wallet Selector (Horizontal Scroll) */}
+                <div style={{ display: 'flex', gap: 6, padding: '0 18px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
+                  {WALLETS.map((w) => {
+                    const isSelected = wallet === w.id;
+                    return (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setWallet(w.id)}
+                        style={{
+                          flexShrink: 0,
+                          padding: '4px 9px',
+                          borderRadius: 'var(--radius-full)',
+                          border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
+                          backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          fontSize: '0.6875rem',
+                          fontWeight: isSelected ? 700 : 500,
+                          color: isSelected ? w.color : 'var(--text-secondary)',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <AppIcon name={w.iconName} size={11} color={w.color} />
+                        {w.label} {w.currency === 'USD' && <span style={{ fontSize: '0.5625rem', opacity: 0.8 }}>(USD)</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 {/* Amount Display */}
-                <div style={{ textAlign: 'center', padding: '16px 18px 20px' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 500 }}>
-                    Nominal Transaksi
+                <div style={{ textAlign: 'center', padding: '8px 18px 16px' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 4, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    <span>Nominal {isUsd ? 'Dollar (USD)' : 'Rupiah (IDR)'}</span>
+                    {isUsd && (
+                      <span style={{ backgroundColor: '#F0F7FF', color: '#0079C1', border: '1px solid #BAE0FD', fontSize: '0.625rem', padding: '1px 6px', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                        $1 = {formatIDR(usdRate)}
+                      </span>
+                    )}
                   </div>
                   <div
                     className="amount"
                     style={{
                       fontSize: amount ? '2.5rem' : '1.75rem',
-                      color: amount ? 'var(--text-primary)' : 'var(--text-muted)',
+                      color: isUsd ? '#0079C1' : amount ? 'var(--text-primary)' : 'var(--text-muted)',
                       letterSpacing: '-0.04em',
                       minHeight: 52,
                       display: 'flex',
@@ -295,13 +336,20 @@ const AddTransactionModal = ({ onClose }) => {
                   >
                     {amount ? (
                       <>
-                        <span style={{ fontSize: '1.25rem', marginRight: 4, color: 'var(--text-muted)' }}>Rp</span>
-                        {formatIDR(parsedAmount).replace('Rp', '').trim()}
+                        <span style={{ fontSize: '1.25rem', marginRight: 4, color: isUsd ? '#0079C1' : 'var(--text-muted)' }}>
+                          {isUsd ? '$' : 'Rp'}
+                        </span>
+                        {isUsd ? amount : formatIDR(parsedAmount).replace('Rp', '').trim()}
                       </>
                     ) : (
-                      <span style={{ color: 'var(--text-disabled)', fontSize: '1.5rem' }}>Rp 0</span>
+                      <span style={{ color: 'var(--text-disabled)', fontSize: '1.5rem' }}>{isUsd ? '$ 0.00' : 'Rp 0'}</span>
                     )}
                   </div>
+                  {isUsd && parsedAmount > 0 && (
+                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2, fontWeight: 600 }}>
+                      ≈ {formatIDR(parsedAmount * usdRate)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Numpad */}

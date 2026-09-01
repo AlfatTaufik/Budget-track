@@ -9,6 +9,23 @@ export const formatIDR = (amount) => {
   }).format(amount);
 };
 
+export const formatUSD = (amount) => {
+  if (amount === undefined || amount === null || isNaN(amount)) return '$ 0.00';
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+export const formatWalletAmount = (amount, walletId) => {
+  if (walletId === 'paypal') {
+    return formatUSD(amount);
+  }
+  return formatIDR(amount);
+};
+
 export const formatCompact = (amount) => {
   // Always return exact specific number as requested by user (no Jt/rb rounding)
   return formatIDR(amount);

@@ -124,8 +124,12 @@ const useStore = create(
       // --- Transactions ---
       addTransaction: async (tx) => {
         const user = get().user;
+        const usdRate = get().usdRate || 16250;
+        const isUsd = tx.wallet === 'paypal' || tx.currency === 'USD';
         const newTx = {
           ...tx,
+          currency: isUsd ? 'USD' : 'IDR',
+          exchangeRate: isUsd ? (tx.exchangeRate || usdRate) : 1,
           id: `tx_${Date.now()}`,
           date: tx.date || new Date().toISOString(),
         };
@@ -514,15 +518,36 @@ const useStore = create(
         });
       },
 
+      // --- Currency & Rates ---
+      usdRate: 16250,
+      fetchUsdRate: async () => {
+        try {
+          const res = await fetch('https://open.er-api.com/v6/latest/USD');
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.rates?.IDR) {
+              set({ usdRate: Math.round(data.rates.IDR) });
+            }
+          }
+        } catch (e) {
+          console.warn('Could not fetch live USD rate, using default 16,250:', e);
+        }
+      },
+
       // --- Computed Getters ---
       getTotalBalance: () => {
-        const balances = get().walletBalances;
-        return Object.values(balances).reduce((sum, v) => sum + v, 0);
+        return get().getTotalLiquidBalance();
       },
 
       getTotalLiquidBalance: () => {
         const balances = get().walletBalances;
-        return Object.values(balances).reduce((sum, v) => sum + v, 0);
+        const usdRate = get().usdRate || 16250;
+        return Object.entries(balances).reduce((sum, [walletId, v]) => {
+          if (walletId === 'paypal') {
+            return sum + (v * usdRate);
+          }
+          return sum + v;
+        }, 0);
       },
 
       getTotalGoalsSaved: () => {
@@ -541,19 +566,31 @@ const useStore = create(
 
       getMonthlyStats: (date = new Date()) => {
         const txs = get().transactions;
+        const usdRate = get().usdRate || 16250;
         const month = date.getMonth();
         const year = date.getFullYear();
         const monthTxs = txs.filter((tx) => {
           const d = new Date(tx.date);
           return d.getMonth() === month && d.getFullYear() === year;
         });
-        const income = monthTxs.filter((tx) => tx.type === 'income').reduce((sum, tx) => sum + tx.amount, 0);
-        const expense = monthTxs.filter((tx) => tx.type === 'expense').reduce((sum, tx) => sum + tx.amount, 0);
+        const income = monthTxs
+          .filter((tx) => tx.type === 'income')
+          .reduce((sum, tx) => {
+            const idr = tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount;
+            return sum + idr;
+          }, 0);
+        const expense = monthTxs
+          .filter((tx) => tx.type === 'expense')
+          .reduce((sum, tx) => {
+            const idr = tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount;
+            return sum + idr;
+          }, 0);
         return { income, expense, balance: income - expense };
       },
 
       getLast6MonthsData: () => {
         const txs = get().transactions;
+        const usdRate = get().usdRate || 16250;
         const result = [];
         const now = new Date();
         for (let i = 5; i >= 0; i--) {
@@ -564,8 +601,18 @@ const useStore = create(
             const date = new Date(tx.date);
             return date.getMonth() === month && date.getFullYear() === year;
           });
-          const income = monthTxs.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-          const expense = monthTxs.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+          const income = monthTxs
+            .filter((t) => t.type === 'income')
+            .reduce((s, t) => {
+              const idr = t.wallet === 'paypal' || t.currency === 'USD' ? t.amount * (t.exchangeRate || usdRate) : t.amount;
+              return s + idr;
+            }, 0);
+          const expense = monthTxs
+            .filter((t) => t.type === 'expense')
+            .reduce((s, t) => {
+              const idr = t.wallet === 'paypal' || t.currency === 'USD' ? t.amount * (t.exchangeRate || usdRate) : t.amount;
+              return s + idr;
+            }, 0);
           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
           result.push({ name: months[month], income, expense });
         }
@@ -574,6 +621,7 @@ const useStore = create(
 
       getCategoryExpenses: (date = new Date()) => {
         const txs = get().transactions;
+        const usdRate = get().usdRate || 16250;
         const month = date.getMonth();
         const year = date.getFullYear();
         const monthExpenses = txs.filter((tx) => {
@@ -582,7 +630,8 @@ const useStore = create(
         });
         const byCategory = {};
         monthExpenses.forEach((tx) => {
-          byCategory[tx.category] = (byCategory[tx.category] || 0) + tx.amount;
+          const idr = tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount;
+          byCategory[tx.category] = (byCategory[tx.category] || 0) + idr;
         });
         return byCategory;
       },
@@ -644,6 +693,8 @@ const useStore = create(
 );
 
 // Initial session check on app load
+useStore.getState().fetchUsdRate();
+
 supabase.auth.getSession().then(({ data: { session } }) => {
   const store = useStore.getState();
   if (session?.user) {

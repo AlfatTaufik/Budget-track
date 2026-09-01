@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, TrendingUp, TrendingDown, Wallet, Coins, Target, ChevronRight, Info } from 'lucide-react';
 import useStore from '../../store/useStore';
-import { formatIDR, formatCompact } from '../../utils/formatters';
+import { formatIDR, formatCompact, formatWalletAmount } from '../../utils/formatters';
 import { WALLETS } from '../../utils/categories';
 import AppIcon from '../Common/AppIcon';
 
@@ -259,7 +259,7 @@ const HeroCard = () => {
             </div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 500 }}>{wallet.label}</span>
             <span className="amount" style={{ fontSize: '0.75rem', color: 'var(--text-primary)', fontWeight: 700 }}>
-              {balanceVisible ? formatCompact(walletBalances[wallet.id]) : '••••'}
+              {balanceVisible ? formatWalletAmount(walletBalances[wallet.id], wallet.id) : '••••'}
             </span>
           </div>
         ))}
