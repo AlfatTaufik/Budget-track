@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Delete, TrendingUp, TrendingDown, StickyNote, ArrowLeft, RotateCcw, Mail, AlertTriangle, Keyboard, Tag, Plus } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, WALLETS } from '../../utils/categories';
-import { formatIDR, formatCompact } from '../../utils/formatters';
+import { formatIDR, formatCompact, formatUSD } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 
 import AddCategoryModal from './AddCategoryModal';
@@ -397,12 +397,20 @@ const AddTransactionModal = ({ onClose }) => {
 
                 {/* Quick Add Chips */}
                 <div style={{ display: 'flex', gap: 6, padding: '0 18px 10px', justifyContent: 'center' }}>
-                  {[
-                    ['+10rb', 10000],
-                    ['+50rb', 50000],
-                    ['+100rb', 100000],
-                    ['+500rb', 500000],
-                  ].map(([label, addVal]) => (
+                  {(isUsd
+                    ? [
+                        ['+$5', 5],
+                        ['+$10', 10],
+                        ['+$50', 50],
+                        ['+$100', 100],
+                      ]
+                    : [
+                        ['+10rb', 10000],
+                        ['+50rb', 50000],
+                        ['+100rb', 100000],
+                        ['+500rb', 500000],
+                      ]
+                  ).map(([label, addVal]) => (
                     <button
                       key={label}
                       type="button"
@@ -480,17 +488,39 @@ const AddTransactionModal = ({ onClose }) => {
                     border: '1px solid var(--border-subtle)',
                   }}
                 >
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>Nominal</span>
-                  <span
-                    className="amount"
-                    style={{
-                      color: type === 'expense' ? '#E11D48' : '#059669',
-                      fontSize: '1rem',
-                    }}
-                  >
-                    {type === 'expense' ? '- ' : '+ '}
-                    {formatIDR(parsedAmount)}
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
+                    Nominal {isUsd ? '(USD)' : ''}
                   </span>
+                  {isUsd ? (
+                    <div style={{ textAlign: 'right' }}>
+                      <div
+                        className="amount"
+                        style={{
+                          color: type === 'expense' ? '#E11D48' : '#059669',
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {type === 'expense' ? '- ' : '+ '}
+                        {formatUSD(parsedAmount)}
+                      </div>
+                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                        ≈ {formatIDR(parsedAmount * usdRate)}
+                      </div>
+                    </div>
+                  ) : (
+                    <span
+                      className="amount"
+                      style={{
+                        color: type === 'expense' ? '#E11D48' : '#059669',
+                        fontSize: '1rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {type === 'expense' ? '- ' : '+ '}
+                      {formatIDR(parsedAmount)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Category Grid */}
@@ -593,7 +623,8 @@ const AddTransactionModal = ({ onClose }) => {
                       </div>
                     );
                   }
-                  const remainingAfterTx = env.remaining - parsedAmount;
+                  const expenseInIDR = isUsd ? parsedAmount * usdRate : parsedAmount;
+                  const remainingAfterTx = env.remaining - expenseInIDR;
                   const willOverbudget = remainingAfterTx < 0;
 
                   return (
