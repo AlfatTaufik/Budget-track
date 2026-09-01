@@ -43,7 +43,7 @@ const useStore = create(
       budgets: [],
       goals: [],
       investments: [],
-      walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
+      walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
       tags: DEFAULT_TAGS,
       expenseCategories: EXPENSE_CATEGORIES,
       incomeCategories: INCOME_CATEGORIES,
@@ -112,8 +112,12 @@ const useStore = create(
             amount: parseFloat(inv.amount),
           }));
 
-          const defaultBalances = { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 };
-          const mergedBalances = { ...defaultBalances, ...(walletBalances || {}) };
+          const defaultBalances = { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 };
+          const loadedBalances = { ...(walletBalances || {}) };
+          if (loadedBalances.shopeepay && !loadedBalances.seabank) {
+            loadedBalances.seabank = loadedBalances.shopeepay;
+          }
+          const mergedBalances = { ...defaultBalances, ...loadedBalances };
 
           set({
             transactions: formattedTxs,
@@ -581,7 +585,7 @@ const useStore = create(
           transactions: [],
           budgets: [],
           goals: [],
-          walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
           investments: [],
           tags: DEFAULT_TAGS,
           expenseCategories: EXPENSE_CATEGORIES,
@@ -600,7 +604,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
-          walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
           dataLoaded: true,
         });
 
@@ -629,7 +633,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
-          walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
           dataLoaded: false,
         });
       },

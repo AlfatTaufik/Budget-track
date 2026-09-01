@@ -26,11 +26,11 @@ export const WALLETS = [
   { id: 'cash', label: 'Tunai', currency: 'IDR', iconName: 'Banknote', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },
   { id: 'bca', label: 'BCA', currency: 'IDR', iconName: 'Building2', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE6FD' },
   { id: 'mandiri', label: 'Mandiri', currency: 'IDR', iconName: 'Building2', color: '#D97706', colorBg: '#FFFBEB', colorBorder: '#FDE68A' },
+  { id: 'seabank', label: 'SeaBank', currency: 'IDR', iconName: 'Building2', color: '#EA580C', colorBg: '#FFF7ED', colorBorder: '#FED7AA' },
   { id: 'paypal', label: 'PayPal', currency: 'USD', iconName: 'CreditCard', color: '#0079C1', colorBg: '#F0F7FF', colorBorder: '#BAE0FD' },
   { id: 'gopay', label: 'GoPay', currency: 'IDR', iconName: 'Smartphone', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },
   { id: 'ovo', label: 'OVO', currency: 'IDR', iconName: 'Smartphone', color: '#7E22CE', colorBg: '#FAF5FF', colorBorder: '#E9D5FF' },
-  { id: 'shopeepay', label: 'ShopeePay', currency: 'IDR', iconName: 'CreditCard', color: '#EA580C', colorBg: '#FFF7ED', colorBorder: '#FED7AA' },
-  { id: 'dana', label: 'DANA', currency: 'IDR', iconName: 'CreditCard', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE6FD' },
+  { id: 'dana', label: 'DANA', currency: 'IDR', iconName: 'CreditCard', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE0FD' },
 ];
 
 export const DEFAULT_TAGS = [

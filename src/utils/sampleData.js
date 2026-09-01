@@ -6,10 +6,10 @@ export const SAMPLE_WALLETS_BALANCE = {
   cash: 0,
   bca: 0,
   mandiri: 0,
+  seabank: 0,
   paypal: 0,
   gopay: 0,
   ovo: 0,
-  shopeepay: 0,
   dana: 0,
 };
 export const SAMPLE_INVESTMENTS = [];
