@@ -556,6 +556,69 @@ const useStore = create(
         }
       },
 
+      topUpInvestment: async (invId, addAmount, sourceWallet) => {
+        const user = get().user;
+        const inv = get().investments.find((i) => i.id === invId);
+        if (!inv || addAmount <= 0) return;
+
+        const usdRate = get().usdRate || 16250;
+        const newTotalAmount = inv.amount + addAmount;
+
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+          let newTxs = state.transactions;
+
+          if (sourceWallet && sourceWallet !== 'none') {
+            const deductAmt = sourceWallet === 'paypal' ? addAmount / usdRate : addAmount;
+            newBalances[sourceWallet] = (newBalances[sourceWallet] || 0) - deductAmt;
+
+            const transferTx = {
+              id: `tx_${Date.now()}`,
+              type: 'transfer',
+              category: 'transfer',
+              amount: deductAmt,
+              wallet: sourceWallet,
+              toWallet: 'investasi',
+              note: `Top Up Investasi: ${inv.name}`,
+              date: new Date().toISOString(),
+            };
+            newTxs = [transferTx, ...state.transactions];
+          }
+
+          return {
+            investments: state.investments.map((i) =>
+              i.id === invId ? { ...i, amount: newTotalAmount } : i
+            ),
+            walletBalances: newBalances,
+            transactions: newTxs,
+          };
+        });
+
+        get().showToast(`Top up investasi Rp ${addAmount.toLocaleString('id-ID')} berhasil! 📈`);
+
+        if (user && isValidUUID(user.id)) {
+          try {
+            await db.updateInvestmentAmount(invId, newTotalAmount, user.id);
+
+            if (sourceWallet && sourceWallet !== 'none') {
+              const currentBal = get().walletBalances[sourceWallet];
+              await db.upsertWalletBalance(sourceWallet, currentBal, user.id);
+              const deductAmt = sourceWallet === 'paypal' ? addAmount / usdRate : addAmount;
+              await db.insertTransaction({
+                type: 'transfer',
+                amount: deductAmt,
+                category: 'transfer',
+                wallet: sourceWallet,
+                note: `[Transfer ke Investasi] Top Up ${inv.name}`,
+                date: new Date().toISOString(),
+              }, user.id).catch(console.warn);
+            }
+          } catch (error) {
+            console.error('Failed to sync top up investment in Supabase:', error);
+          }
+        }
+      },
+
       deleteInvestment: async (invId) => {
         const user = get().user;
         set((state) => ({

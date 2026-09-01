@@ -7,6 +7,7 @@ import { getCategoryById } from '../../utils/categories';
 import { formatIDR, formatCompact } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 import AddInvestmentModal from '../Modal/AddInvestmentModal';
+import TopUpInvestmentModal from '../Modal/TopUpInvestmentModal';
 
 const RADIAN = Math.PI / 180;
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -86,6 +87,7 @@ const AnalyticsPage = () => {
   const [showAddInv, setShowAddInv] = useState(false);
   const [editingInv, setEditingInv] = useState(null);
   const [invInput, setInvInput] = useState('');
+  const [topUpInv, setTopUpInv] = useState(null);
 
   const categoryExpenses = getCategoryExpenses();
   const budgetProgress = getBudgetProgress();
@@ -301,10 +303,31 @@ const AnalyticsPage = () => {
                       </button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span className="amount" style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                         {formatCompact(inv.amount)}
                       </span>
+                      <button
+                        type="button"
+                        onClick={() => setTopUpInv(inv)}
+                        style={{
+                          padding: '3px 8px',
+                          backgroundColor: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          borderRadius: 'var(--radius-full)',
+                          color: '#059669',
+                          fontSize: '0.6875rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 3,
+                          transition: 'all 0.15s',
+                        }}
+                        title="Top up / tambah dana ke investasi ini"
+                      >
+                        <Plus size={11} /> Top Up
+                      </button>
                       <button
                         onClick={() => {
                           setEditingInv(inv.id);
@@ -318,6 +341,7 @@ const AnalyticsPage = () => {
                           padding: 2,
                         }}
                         type="button"
+                        title="Edit nilai langsung"
                       >
                         <Pencil size={11} />
                       </button>
@@ -331,6 +355,7 @@ const AnalyticsPage = () => {
                           padding: 2,
                         }}
                         type="button"
+                        title="Hapus instrumen investasi ini"
                       >
                         <Trash2 size={11} />
                       </button>
@@ -494,6 +519,7 @@ const AnalyticsPage = () => {
       )}
       <AnimatePresence>
         {showAddInv && <AddInvestmentModal onClose={() => setShowAddInv(false)} />}
+        {topUpInv && <TopUpInvestmentModal inv={topUpInv} onClose={() => setTopUpInv(null)} />}
       </AnimatePresence>
     </div>
   );
