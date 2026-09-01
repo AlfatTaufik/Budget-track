@@ -640,19 +640,17 @@ const useStore = create(
     }),
     {
       name: 'flowwallet-storage',
-      version: 5,
+      version: 6,
       migrate: (persistedState, version) => {
-        if (version < 5) {
-          // Filter out legacy dummy sample transactions (tx1, tx2, etc.)
-          const cleanTxs = (persistedState?.transactions || []).filter(
-            (t) => t?.id && !/^tx[0-9]+$/i.test(t.id)
-          );
+        if (version < 6) {
+          // Clean all old dummy sample data and cached balances
           return {
             ...persistedState,
-            transactions: cleanTxs,
+            transactions: [],
             budgets: [],
             goals: [],
             investments: [],
+            walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           };
         }
         return persistedState;
