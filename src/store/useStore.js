@@ -50,7 +50,7 @@ const useStore = create(
       balanceVisible: true,
       dataLoaded: false,
 
-      // --- Load Data from Supabase ---
+      // --- Load Data from Supabase (Single Source of Truth) ---
       loadUserData: async (userId) => {
         if (!isValidUUID(userId)) {
           set({ dataLoaded: true });
@@ -60,70 +60,52 @@ const useStore = create(
           const [transactions, budgets, goals, walletBalances, investments] = await Promise.all([
             db.fetchTransactions(userId).catch((err) => {
               console.warn('fetchTransactions error:', err);
-              return null;
+              return [];
             }),
             db.fetchBudgets(userId).catch((err) => {
               console.warn('fetchBudgets error:', err);
-              return null;
+              return [];
             }),
             db.fetchGoals(userId).catch((err) => {
               console.warn('fetchGoals error:', err);
-              return null;
+              return [];
             }),
             db.fetchWalletBalances(userId).catch((err) => {
               console.warn('fetchWalletBalances error:', err);
-              return null;
+              return {};
             }),
             db.fetchInvestments(userId).catch((err) => {
               console.warn('fetchInvestments error:', err);
-              return null;
+              return [];
             }),
           ]);
 
-          const current = get();
+          const formattedTxs = (transactions || []).map((tx) => ({
+            ...tx,
+            amount: parseFloat(tx.amount),
+          }));
 
-          // Safe Transaction Merging: Never erase local user-created transactions
-          let formattedTxs = current.transactions;
-          if (transactions !== null) {
-            if (transactions.length > 0) {
-              const cloudTxs = transactions.map((tx) => ({ ...tx, amount: parseFloat(tx.amount) }));
-              const cloudIds = new Set(cloudTxs.map((t) => t.id));
-              // Keep any local user transaction that hasn't synced yet (excluding default dummy samples)
-              const pendingLocalTxs = current.transactions.filter(
-                (t) => !cloudIds.has(t.id) && t.id && !SAMPLE_TRANSACTIONS.some((st) => st.id === t.id)
-              );
-              formattedTxs = [...cloudTxs, ...pendingLocalTxs];
-            } else {
-              // Cloud returned 0 transactions. Filter out sample dummy data, but KEEP user-created transactions!
-              const userLocalTxs = current.transactions.filter(
-                (t) => t.id && !SAMPLE_TRANSACTIONS.some((st) => st.id === t.id)
-              );
-              formattedTxs = userLocalTxs;
-            }
-          }
+          const formattedBudgets = (budgets || []).map((b) => ({
+            ...b,
+            limit: parseFloat(b.limit_amount),
+            category: b.category,
+          }));
 
-          let formattedBudgets = budgets !== null
-            ? budgets.map((b) => ({ ...b, limit: parseFloat(b.limit_amount), category: b.category }))
-            : current.budgets;
+          const formattedGoals = (goals || []).map((g) => ({
+            ...g,
+            targetAmount: parseFloat(g.target_amount),
+            savedAmount: parseFloat(g.saved_amount),
+            iconName: g.icon || 'Target',
+            color: g.color || '#4F46E5',
+          }));
 
-          let formattedGoals = goals !== null
-            ? goals.map((g) => ({
-                ...g,
-                targetAmount: parseFloat(g.target_amount),
-                savedAmount: parseFloat(g.saved_amount),
-                iconName: g.icon || 'Target',
-                color: g.color || '#4F46E5',
-              }))
-            : current.goals;
-
-          let formattedInvestments = investments !== null
-            ? investments.map((inv) => ({ ...inv, amount: parseFloat(inv.amount) }))
-            : current.investments;
+          const formattedInvestments = (investments || []).map((inv) => ({
+            ...inv,
+            amount: parseFloat(inv.amount),
+          }));
 
           const defaultBalances = { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 };
-          const mergedBalances = walletBalances !== null
-            ? { ...defaultBalances, ...walletBalances }
-            : current.walletBalances;
+          const mergedBalances = { ...defaultBalances, ...(walletBalances || {}) };
 
           set({
             transactions: formattedTxs,
@@ -133,20 +115,8 @@ const useStore = create(
             walletBalances: mergedBalances,
             dataLoaded: true,
           });
-
-          // Background sync for any pending local transactions to Supabase
-          if (transactions !== null && transactions.length === 0 && formattedTxs.length > 0) {
-            for (const tx of formattedTxs) {
-              if (tx.id && typeof tx.id === 'string' && tx.id.startsWith('tx_')) {
-                db.insertTransaction(
-                  { type: tx.type, amount: tx.amount, category: tx.category, wallet: tx.wallet, note: tx.note || null, date: tx.date },
-                  userId
-                ).catch(() => {});
-              }
-            }
-          }
         } catch (error) {
-          console.warn('Preserving persisted local user data on Supabase error:', error);
+          console.error('Error loading Supabase user data:', error);
           set({ dataLoaded: true });
         }
       },
@@ -640,33 +610,16 @@ const useStore = create(
     }),
     {
       name: 'flowwallet-storage',
-      version: 6,
-      migrate: (persistedState, version) => {
-        if (version < 6) {
-          // Clean all old dummy sample data and cached balances
-          return {
-            ...persistedState,
-            transactions: [],
-            budgets: [],
-            goals: [],
-            investments: [],
-            walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
-          };
-        }
-        return persistedState;
-      },
+      version: 7,
+      migrate: () => ({
+        // On version upgrade, clear any persisted finance data
+      }),
       partialize: (state) => ({
         user: state.user,
-        transactions: state.transactions,
-        budgets: state.budgets,
-        goals: state.goals,
-        investments: state.investments,
-        walletBalances: state.walletBalances,
+        balanceVisible: state.balanceVisible,
         tags: state.tags,
         expenseCategories: state.expenseCategories,
         incomeCategories: state.incomeCategories,
-        balanceVisible: state.balanceVisible,
-        dataLoaded: state.dataLoaded,
       }),
     }
   )
