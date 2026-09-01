@@ -50,6 +50,15 @@ export const upsertBudget = async (category, limit_amount, userId) => {
   return data;
 };
 
+export const deleteBudget = async (category, userId) => {
+  const { error } = await supabase
+    .from('budgets')
+    .delete()
+    .eq('category', category)
+    .eq('user_id', userId);
+  if (error) throw error;
+};
+
 // ── Goals ─────────────────────────────────────────────
 export const fetchGoals = async (userId) => {
   const { data, error } = await supabase

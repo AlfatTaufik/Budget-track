@@ -15,10 +15,28 @@ const useStore = create(
     (set, get) => ({
       // --- Auth State ---
       user: null,
-      authLoading: false,
+      authLoading: true,
 
-      setUser: (user) => set({ user }),
+      setUser: async (user) => {
+        set({ user });
+        if (user && isValidUUID(user.id)) {
+          await get().loadUserData(user.id);
+        }
+      },
       setAuthLoading: (authLoading) => set({ authLoading }),
+
+      // --- Toast Notification State ---
+      toast: null,
+      showToast: (message, type = 'success') => {
+        const id = Date.now();
+        set({ toast: { message, type, id } });
+        setTimeout(() => {
+          if (get().toast?.id === id) {
+            set({ toast: null });
+          }
+        }, 3000);
+      },
+      hideToast: () => set({ toast: null }),
 
       // --- App State ---
       transactions: SAMPLE_TRANSACTIONS,
@@ -30,53 +48,77 @@ const useStore = create(
       expenseCategories: EXPENSE_CATEGORIES,
       incomeCategories: INCOME_CATEGORIES,
       balanceVisible: true,
-      dataLoaded: true,
+      dataLoaded: false,
 
       // --- Load Data from Supabase ---
       loadUserData: async (userId) => {
         if (!isValidUUID(userId)) return;
         try {
           const [transactions, budgets, goals, walletBalances, investments] = await Promise.all([
-            db.fetchTransactions(userId),
-            db.fetchBudgets(userId),
-            db.fetchGoals(userId),
-            db.fetchWalletBalances(userId),
-            db.fetchInvestments(userId),
+            db.fetchTransactions(userId).catch(() => null),
+            db.fetchBudgets(userId).catch(() => null),
+            db.fetchGoals(userId).catch(() => null),
+            db.fetchWalletBalances(userId).catch(() => null),
+            db.fetchInvestments(userId).catch(() => null),
           ]);
 
-          const updates = { dataLoaded: true };
-          if (transactions && transactions.length > 0) {
-            updates.transactions = transactions.map((tx) => ({
-              ...tx,
-              amount: parseFloat(tx.amount),
-            }));
-          }
-          if (budgets && budgets.length > 0) {
-            updates.budgets = budgets.map((b) => ({
-              ...b,
-              limit: parseFloat(b.limit_amount),
-              category: b.category,
-            }));
-          }
-          if (goals && goals.length > 0) {
-            updates.goals = goals.map((g) => ({
-              ...g,
-              targetAmount: parseFloat(g.target_amount),
-              savedAmount: parseFloat(g.saved_amount),
-              iconName: g.icon || 'Target',
-            }));
-          }
-          if (investments && investments.length > 0) {
-            updates.investments = investments.map((inv) => ({
-              ...inv,
-              amount: parseFloat(inv.amount),
-            }));
-          }
-          if (walletBalances && Object.keys(walletBalances).length > 0) {
-            updates.walletBalances = walletBalances;
+          const current = get();
+
+          // If cloud data is returned, format it.
+          let formattedTxs = current.transactions;
+          if (transactions !== null) {
+            if (transactions.length > 0) {
+              formattedTxs = transactions.map((tx) => ({ ...tx, amount: parseFloat(tx.amount) }));
+            } else {
+              // Cloud returned empty array - if local was sample dummy data, start fresh
+              const isSample = current.transactions === SAMPLE_TRANSACTIONS || 
+                (current.transactions.length === SAMPLE_TRANSACTIONS.length && current.transactions[0]?.id === 'tx_1');
+              if (isSample) {
+                formattedTxs = [];
+              }
+            }
           }
 
-          set(updates);
+          let formattedBudgets = current.budgets;
+          if (budgets !== null) {
+            if (budgets.length > 0) {
+              formattedBudgets = budgets.map((b) => ({ ...b, limit: parseFloat(b.limit_amount), category: b.category }));
+            }
+          }
+
+          let formattedGoals = current.goals;
+          if (goals !== null) {
+            if (goals.length > 0) {
+              formattedGoals = goals.map((g) => ({
+                ...g,
+                targetAmount: parseFloat(g.target_amount),
+                savedAmount: parseFloat(g.saved_amount),
+                iconName: g.icon || 'Target',
+                color: g.color || '#4F46E5',
+              }));
+            }
+          }
+
+          let formattedInvestments = current.investments;
+          if (investments !== null) {
+            if (investments.length > 0) {
+              formattedInvestments = investments.map((inv) => ({ ...inv, amount: parseFloat(inv.amount) }));
+            }
+          }
+
+          const defaultBalances = { bca: 0, gopay: 0, ovo: 0, cash: 0 };
+          const mergedBalances = walletBalances && Object.keys(walletBalances).length > 0
+            ? { ...defaultBalances, ...walletBalances }
+            : current.walletBalances;
+
+          set({
+            transactions: formattedTxs,
+            budgets: formattedBudgets,
+            goals: formattedGoals,
+            investments: formattedInvestments,
+            walletBalances: mergedBalances,
+            dataLoaded: true,
+          });
         } catch (error) {
           console.warn('Preserving persisted local user data on Supabase error:', error);
           set({ dataLoaded: true });
@@ -89,7 +131,7 @@ const useStore = create(
         const newTx = {
           ...tx,
           id: `tx_${Date.now()}`,
-          date: new Date().toISOString(),
+          date: tx.date || new Date().toISOString(),
         };
 
         // Instant Local Update
@@ -106,6 +148,8 @@ const useStore = create(
           };
         });
 
+        get().showToast(tx.type === 'expense' ? 'Pengeluaran berhasil dicatat! ✨' : 'Pemasukan berhasil dicatat! ✨');
+
         // Sync to Supabase if valid user
         if (user && isValidUUID(user.id)) {
           try {
@@ -113,12 +157,13 @@ const useStore = create(
               { type: tx.type, amount: tx.amount, category: tx.category, wallet: tx.wallet, note: tx.note || null, date: newTx.date },
               user.id
             );
-            // Replace temp ID with real DB id
-            set((state) => ({
-              transactions: state.transactions.map((t) =>
-                t.id === newTx.id ? { ...t, id: saved.id } : t
-              ),
-            }));
+            if (saved?.id) {
+              set((state) => ({
+                transactions: state.transactions.map((t) =>
+                  t.id === newTx.id ? { ...t, id: saved.id } : t
+                ),
+              }));
+            }
 
             // Sync wallet balance to Supabase
             const currentBalance = get().walletBalances[tx.wallet];
@@ -134,6 +179,8 @@ const useStore = create(
         set((state) => ({
           transactions: state.transactions.filter((tx) => tx.id !== id),
         }));
+        get().showToast('Transaksi berhasil dihapus.');
+
         if (user && isValidUUID(user.id)) {
           try {
             await db.deleteTransactionById(id, user.id);
@@ -153,6 +200,8 @@ const useStore = create(
           }
           return { budgets: [...state.budgets, { id: `b_${Date.now()}`, category, limit }] };
         });
+        get().showToast('Jatah amplop berhasil disimpan! ✉️');
+
         if (user && isValidUUID(user.id)) {
           try {
             await db.upsertBudget(category, limit, user.id);
@@ -167,9 +216,11 @@ const useStore = create(
         set((state) => ({
           budgets: state.budgets.filter((b) => b.category !== category),
         }));
-        if (user) {
+        get().showToast('Jatah amplop berhasil dihapus.');
+
+        if (user && isValidUUID(user.id)) {
           try {
-            // Can be synced to Supabase if delete method exists
+            await db.deleteBudget(category, user.id);
           } catch (error) {
             console.error('Failed to delete budget:', error);
           }
@@ -183,36 +234,39 @@ const useStore = create(
         const newGoal = {
           ...goalData,
           id: tempId,
-          savedAmount: 0,
+          savedAmount: goalData.savedAmount || 0,
         };
 
         set((state) => ({
           goals: [...state.goals, newGoal],
         }));
+        get().showToast('Kantong tabungan berhasil dibuat! 🎯');
 
         if (user && isValidUUID(user.id)) {
           try {
             const saved = await db.insertGoal({
               name: goalData.name,
-              icon: goalData.iconName,
+              icon: goalData.iconName || 'Target',
               target_amount: goalData.targetAmount,
-              saved_amount: 0,
-              color: goalData.color,
+              saved_amount: goalData.savedAmount || 0,
+              color: goalData.color || '#4F46E5',
               deadline: goalData.deadline || null,
             }, user.id);
 
-            set((state) => ({
-              goals: state.goals.map((g) =>
-                g.id === tempId
-                  ? {
-                      ...g,
-                      id: saved.id,
-                      targetAmount: parseFloat(saved.target_amount),
-                      savedAmount: parseFloat(saved.saved_amount),
-                    }
-                  : g
-              ),
-            }));
+            if (saved?.id) {
+              set((state) => ({
+                goals: state.goals.map((g) =>
+                  g.id === tempId
+                    ? {
+                        ...g,
+                        id: saved.id,
+                        targetAmount: parseFloat(saved.target_amount),
+                        savedAmount: parseFloat(saved.saved_amount),
+                      }
+                    : g
+                ),
+              }));
+            }
           } catch (error) {
             console.error('Failed to sync new goal to Supabase:', error);
           }
@@ -224,6 +278,7 @@ const useStore = create(
         set((state) => ({
           goals: state.goals.filter((g) => g.id !== goalId),
         }));
+        get().showToast('Kantong tabungan berhasil dihapus.');
 
         if (user && isValidUUID(user.id)) {
           try {
@@ -244,6 +299,8 @@ const useStore = create(
             g.id === goalId ? { ...g, savedAmount: newSaved } : g
           ),
         }));
+        get().showToast(`Berhasil menambah tabungan Rp ${amount.toLocaleString('id-ID')}! 🎉`);
+
         if (user && isValidUUID(user.id)) {
           try {
             await db.updateGoalSaved(goalId, newSaved, user.id);
@@ -278,6 +335,7 @@ const useStore = create(
         set((state) => ({
           investments: [...state.investments, newInv],
         }));
+        get().showToast('Aset investasi berhasil disimpan! 📈');
 
         if (user && isValidUUID(user.id)) {
           try {
@@ -287,11 +345,13 @@ const useStore = create(
               amount: invData.amount,
             }, user.id);
 
-            set((state) => ({
-              investments: state.investments.map((inv) =>
-                inv.id === tempId ? { ...inv, id: saved.id, amount: parseFloat(saved.amount) } : inv
-              ),
-            }));
+            if (saved?.id) {
+              set((state) => ({
+                investments: state.investments.map((inv) =>
+                  inv.id === tempId ? { ...inv, id: saved.id, amount: parseFloat(saved.amount) } : inv
+                ),
+              }));
+            }
           } catch (error) {
             console.error('Failed to sync new investment to Supabase:', error);
           }
@@ -305,6 +365,7 @@ const useStore = create(
             inv.id === invId ? { ...inv, amount } : inv
           ),
         }));
+        get().showToast('Nilai investasi berhasil diperbarui!');
 
         if (user && isValidUUID(user.id)) {
           try {
@@ -320,6 +381,7 @@ const useStore = create(
         set((state) => ({
           investments: state.investments.filter((inv) => inv.id !== invId),
         }));
+        get().showToast('Aset investasi berhasil dihapus.');
 
         if (user && isValidUUID(user.id)) {
           try {
@@ -339,6 +401,7 @@ const useStore = create(
           if (state.tags.includes(clean)) return state;
           return { tags: [...state.tags, clean] };
         });
+        get().showToast(`Label #${clean} ditambahkan!`);
       },
 
       deleteTag: (tagName) => {
@@ -364,6 +427,7 @@ const useStore = create(
           }
           return { expenseCategories: [...state.expenseCategories, catObj] };
         });
+        get().showToast(`Kategori "${catObj.label}" berhasil dibuat! ✨`);
         return catObj;
       },
 
@@ -390,6 +454,7 @@ const useStore = create(
           incomeCategories: INCOME_CATEGORIES,
           dataLoaded: true,
         });
+        get().showToast('Data dikembalikan ke contoh awal.');
       },
 
       resetAllData: () => {
@@ -401,6 +466,7 @@ const useStore = create(
           walletBalances: { bca: 0, gopay: 0, ovo: 0, cash: 0 },
           dataLoaded: true,
         });
+        get().showToast('Semua data berhasil dikosongkan.');
       },
 
       // --- Logout ---
@@ -412,6 +478,12 @@ const useStore = create(
         }
         set({
           user: null,
+          transactions: SAMPLE_TRANSACTIONS,
+          budgets: SAMPLE_BUDGETS.map((b) => ({ ...b, limit: 1500000 })),
+          goals: SAMPLE_GOALS,
+          investments: SAMPLE_INVESTMENTS,
+          walletBalances: SAMPLE_WALLETS_BALANCE,
+          dataLoaded: false,
         });
       },
 
@@ -529,7 +601,7 @@ const useStore = create(
     }),
     {
       name: 'flowwallet-storage',
-      version: 3,
+      version: 4,
       partialize: (state) => ({
         user: state.user,
         transactions: state.transactions,
@@ -547,19 +619,28 @@ const useStore = create(
   )
 );
 
-// Listen to Supabase auth state changes
-supabase.auth.onAuthStateChange(async (event, session) => {
+// Initial session check on app load
+supabase.auth.getSession().then(({ data: { session } }) => {
   const store = useStore.getState();
-  store.setAuthLoading(false);
-
   if (session?.user) {
     store.setUser(session.user);
-    if (!store.dataLoaded) {
-      await store.loadUserData(session.user.id);
-    }
-  } else if (event === 'SIGNED_OUT') {
-    store.setUser(null);
   }
+  store.setAuthLoading(false);
+}).catch(() => {
+  useStore.getState().setAuthLoading(false);
+});
+
+// Listen to Supabase auth state changes safely
+supabase.auth.onAuthStateChange(async (event, session) => {
+  const store = useStore.getState();
+  if (session?.user) {
+    await store.setUser(session.user);
+  } else if (event === 'SIGNED_OUT') {
+    if (store.user && isValidUUID(store.user.id)) {
+      store.logout();
+    }
+  }
+  store.setAuthLoading(false);
 });
 
 export default useStore;

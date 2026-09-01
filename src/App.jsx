@@ -10,6 +10,7 @@ import TransactionList from './components/Transaction/TransactionList';
 import AnalyticsPage from './components/Analytics/AnalyticsPage';
 import BudgetsPage from './components/Budgets/BudgetsPage';
 import LoginPage from './components/Auth/LoginPage';
+import Toast from './components/Common/Toast';
 import useStore from './store/useStore';
 import { Plus, Loader2, Wallet } from 'lucide-react';
 
@@ -115,6 +116,9 @@ function App() {
       <AnimatePresence>
         {showModal && <AddTransactionModal onClose={() => setShowModal(false)} />}
       </AnimatePresence>
+
+      {/* Global Instant Feedback Toast */}
+      <Toast />
     </>
   );
 }

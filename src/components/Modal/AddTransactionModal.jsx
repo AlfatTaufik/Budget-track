@@ -347,6 +347,40 @@ const AddTransactionModal = ({ onClose }) => {
                   })}
                 </div>
 
+                {/* Quick Add Chips */}
+                <div style={{ display: 'flex', gap: 6, padding: '0 18px 10px', justifyContent: 'center' }}>
+                  {[
+                    ['+10rb', 10000],
+                    ['+50rb', 50000],
+                    ['+100rb', 100000],
+                    ['+500rb', 500000],
+                  ].map(([label, addVal]) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => {
+                        const current = parseFloat(amount) || 0;
+                        setAmount(String(current + addVal));
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: '5px 0',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: '#FFFFFF',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '0.6875rem',
+                        fontWeight: 600,
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        boxShadow: 'var(--shadow-xs)',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
                 {/* Keyboard Numpad Helper Badge */}
                 <div
                   style={{
