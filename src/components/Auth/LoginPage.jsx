@@ -43,11 +43,12 @@ const LoginPage = ({ onLogin }) => {
       }
       const msgs = {
         'Invalid login credentials': 'Email atau password salah.',
-        'Email not confirmed': 'Email belum dikonfirmasi. Cek inbox/spam email Anda.',
-        'User already registered': 'Email ini sudah terdaftar. Silakan login.',
+        'Email not confirmed': 'Email belum dikonfirmasi. Cek link konfirmasi di email Anda, atau gunakan "Mode Demo" di bawah.',
+        'User already registered': 'Email ini sudah terdaftar. Silakan pilih tab "Masuk".',
         'Password should be at least 6 characters': 'Password minimal harus 6 karakter.',
+        'email_address_invalid': 'Format email tidak valid. Gunakan format seperti nama@gmail.com.',
       };
-      setError(msgs[err.message] || err.message);
+      setError(msgs[err.message] || msgs[err.code] || err.message);
     } finally {
       setLoading(false);
     }

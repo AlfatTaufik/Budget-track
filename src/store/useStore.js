@@ -52,58 +52,75 @@ const useStore = create(
 
       // --- Load Data from Supabase ---
       loadUserData: async (userId) => {
-        if (!isValidUUID(userId)) return;
+        if (!isValidUUID(userId)) {
+          set({ dataLoaded: true });
+          return;
+        }
         try {
           const [transactions, budgets, goals, walletBalances, investments] = await Promise.all([
-            db.fetchTransactions(userId).catch(() => null),
-            db.fetchBudgets(userId).catch(() => null),
-            db.fetchGoals(userId).catch(() => null),
-            db.fetchWalletBalances(userId).catch(() => null),
-            db.fetchInvestments(userId).catch(() => null),
+            db.fetchTransactions(userId).catch((err) => {
+              console.warn('fetchTransactions error:', err);
+              return null;
+            }),
+            db.fetchBudgets(userId).catch((err) => {
+              console.warn('fetchBudgets error:', err);
+              return null;
+            }),
+            db.fetchGoals(userId).catch((err) => {
+              console.warn('fetchGoals error:', err);
+              return null;
+            }),
+            db.fetchWalletBalances(userId).catch((err) => {
+              console.warn('fetchWalletBalances error:', err);
+              return null;
+            }),
+            db.fetchInvestments(userId).catch((err) => {
+              console.warn('fetchInvestments error:', err);
+              return null;
+            }),
           ]);
 
           const current = get();
 
-          // If cloud data is returned, format it.
+          // Safe Transaction Merging: Never erase local user-created transactions
           let formattedTxs = current.transactions;
           if (transactions !== null) {
             if (transactions.length > 0) {
-              formattedTxs = transactions.map((tx) => ({ ...tx, amount: parseFloat(tx.amount) }));
+              const cloudTxs = transactions.map((tx) => ({ ...tx, amount: parseFloat(tx.amount) }));
+              const cloudIds = new Set(cloudTxs.map((t) => t.id));
+              // Keep any local user transaction that hasn't synced yet (excluding default dummy samples)
+              const pendingLocalTxs = current.transactions.filter(
+                (t) => !cloudIds.has(t.id) && t.id && !SAMPLE_TRANSACTIONS.some((st) => st.id === t.id)
+              );
+              formattedTxs = [...cloudTxs, ...pendingLocalTxs];
             } else {
-              // Cloud returned empty array - if local was sample dummy data, start fresh
-              const isSample = current.transactions === SAMPLE_TRANSACTIONS || 
-                (current.transactions.length === SAMPLE_TRANSACTIONS.length && current.transactions[0]?.id === 'tx_1');
-              if (isSample) {
-                formattedTxs = [];
-              }
+              // Cloud returned 0 transactions. Filter out sample dummy data, but KEEP user-created transactions!
+              const userLocalTxs = current.transactions.filter(
+                (t) => t.id && !SAMPLE_TRANSACTIONS.some((st) => st.id === t.id)
+              );
+              formattedTxs = userLocalTxs;
             }
           }
 
           let formattedBudgets = current.budgets;
-          if (budgets !== null) {
-            if (budgets.length > 0) {
-              formattedBudgets = budgets.map((b) => ({ ...b, limit: parseFloat(b.limit_amount), category: b.category }));
-            }
+          if (budgets !== null && budgets.length > 0) {
+            formattedBudgets = budgets.map((b) => ({ ...b, limit: parseFloat(b.limit_amount), category: b.category }));
           }
 
           let formattedGoals = current.goals;
-          if (goals !== null) {
-            if (goals.length > 0) {
-              formattedGoals = goals.map((g) => ({
-                ...g,
-                targetAmount: parseFloat(g.target_amount),
-                savedAmount: parseFloat(g.saved_amount),
-                iconName: g.icon || 'Target',
-                color: g.color || '#4F46E5',
-              }));
-            }
+          if (goals !== null && goals.length > 0) {
+            formattedGoals = goals.map((g) => ({
+              ...g,
+              targetAmount: parseFloat(g.target_amount),
+              savedAmount: parseFloat(g.saved_amount),
+              iconName: g.icon || 'Target',
+              color: g.color || '#4F46E5',
+            }));
           }
 
           let formattedInvestments = current.investments;
-          if (investments !== null) {
-            if (investments.length > 0) {
-              formattedInvestments = investments.map((inv) => ({ ...inv, amount: parseFloat(inv.amount) }));
-            }
+          if (investments !== null && investments.length > 0) {
+            formattedInvestments = investments.map((inv) => ({ ...inv, amount: parseFloat(inv.amount) }));
           }
 
           const defaultBalances = { bca: 0, gopay: 0, ovo: 0, cash: 0 };
@@ -119,6 +136,18 @@ const useStore = create(
             walletBalances: mergedBalances,
             dataLoaded: true,
           });
+
+          // Background sync for any pending local transactions to Supabase
+          if (transactions !== null && transactions.length === 0 && formattedTxs.length > 0) {
+            for (const tx of formattedTxs) {
+              if (tx.id && typeof tx.id === 'string' && tx.id.startsWith('tx_')) {
+                db.insertTransaction(
+                  { type: tx.type, amount: tx.amount, category: tx.category, wallet: tx.wallet, note: tx.note || null, date: tx.date },
+                  userId
+                ).catch(() => {});
+              }
+            }
+          }
         } catch (error) {
           console.warn('Preserving persisted local user data on Supabase error:', error);
           set({ dataLoaded: true });
