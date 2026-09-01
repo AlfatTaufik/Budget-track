@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, ChevronDown, Wallet, RotateCcw, Trash2 } from 'lucide-react';
+import { LogOut, ChevronDown, Wallet, Trash2 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -13,7 +13,6 @@ const PAGE_TITLES = {
 const Header = ({ activePage }) => {
   const user = useStore((s) => s.user);
   const logout = useStore((s) => s.logout);
-  const resetToSampleData = useStore((s) => s.resetToSampleData);
   const resetAllData = useStore((s) => s.resetAllData);
   const [showMenu, setShowMenu] = useState(false);
 
@@ -144,34 +143,6 @@ const Header = ({ activePage }) => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => {
-                      if (window.confirm('Kembalikan semua data ke contoh awal?')) {
-                        resetToSampleData();
-                        setShowMenu(false);
-                      }
-                    }}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '8px 8px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-card-subtle)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
-                  >
-                    <RotateCcw size={13} color="var(--text-secondary)" />
-                    Reset ke Data Contoh
-                  </button>
 
                   <button
                     onClick={() => {

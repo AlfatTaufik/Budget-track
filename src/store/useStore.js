@@ -39,11 +39,11 @@ const useStore = create(
       hideToast: () => set({ toast: null }),
 
       // --- App State ---
-      transactions: SAMPLE_TRANSACTIONS,
-      budgets: SAMPLE_BUDGETS.map((b) => ({ ...b, limit: 1500000 })),
-      goals: SAMPLE_GOALS,
-      investments: SAMPLE_INVESTMENTS,
-      walletBalances: SAMPLE_WALLETS_BALANCE,
+      transactions: [],
+      budgets: [],
+      goals: [],
+      investments: [],
+      walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
       tags: DEFAULT_TAGS,
       expenseCategories: EXPENSE_CATEGORIES,
       incomeCategories: INCOME_CATEGORIES,
@@ -473,17 +473,17 @@ const useStore = create(
       // --- Reset Data ---
       resetToSampleData: () => {
         set({
-          transactions: SAMPLE_TRANSACTIONS,
-          budgets: SAMPLE_BUDGETS.map((b) => ({ ...b, limit: 1500000 })),
-          goals: SAMPLE_GOALS,
-          walletBalances: SAMPLE_WALLETS_BALANCE,
-          investments: SAMPLE_INVESTMENTS,
+          transactions: [],
+          budgets: [],
+          goals: [],
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
+          investments: [],
           tags: DEFAULT_TAGS,
           expenseCategories: EXPENSE_CATEGORIES,
           incomeCategories: INCOME_CATEGORIES,
           dataLoaded: true,
         });
-        get().showToast('Data dikembalikan ke contoh awal.');
+        get().showToast('Data berhasil dikosongkan.');
       },
 
       resetAllData: () => {
@@ -492,7 +492,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
-          walletBalances: { bca: 0, gopay: 0, ovo: 0, cash: 0 },
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           dataLoaded: true,
         });
         get().showToast('Semua data berhasil dikosongkan.');
@@ -507,11 +507,11 @@ const useStore = create(
         }
         set({
           user: null,
-          transactions: SAMPLE_TRANSACTIONS,
-          budgets: SAMPLE_BUDGETS.map((b) => ({ ...b, limit: 1500000 })),
-          goals: SAMPLE_GOALS,
-          investments: SAMPLE_INVESTMENTS,
-          walletBalances: SAMPLE_WALLETS_BALANCE,
+          transactions: [],
+          budgets: [],
+          goals: [],
+          investments: [],
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           dataLoaded: false,
         });
       },
@@ -630,7 +630,23 @@ const useStore = create(
     }),
     {
       name: 'flowwallet-storage',
-      version: 4,
+      version: 5,
+      migrate: (persistedState, version) => {
+        if (version < 5) {
+          // Filter out legacy dummy sample transactions (tx1, tx2, etc.)
+          const cleanTxs = (persistedState?.transactions || []).filter(
+            (t) => t?.id && !/^tx[0-9]+$/i.test(t.id)
+          );
+          return {
+            ...persistedState,
+            transactions: cleanTxs,
+            budgets: [],
+            goals: [],
+            investments: [],
+          };
+        }
+        return persistedState;
+      },
       partialize: (state) => ({
         user: state.user,
         transactions: state.transactions,

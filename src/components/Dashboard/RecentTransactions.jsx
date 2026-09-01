@@ -136,9 +136,20 @@ const RecentTransactions = ({ onViewAll }) => {
           Lihat Semua <ChevronRight size={14} />
         </button>
       </div>
-      {recent.map((tx) => (
-        <TransactionItem key={tx.id} tx={tx} extraCategories={allCategories} />
-      ))}
+      {recent.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '24px 12px 18px', color: 'var(--text-muted)' }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 4 }}>
+            Belum ada transaksi
+          </p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Tekan tombol <strong>+</strong> di bawah untuk mencatat transaksi pertamamu
+          </p>
+        </div>
+      ) : (
+        recent.map((tx) => (
+          <TransactionItem key={tx.id} tx={tx} extraCategories={allCategories} />
+        ))
+      )}
     </motion.div>
   );
 };
