@@ -11,18 +11,18 @@ const HeroCard = () => {
   const getTotalLiquidBalance = useStore((s) => s.getTotalLiquidBalance);
   const getTotalGoalsSaved = useStore((s) => s.getTotalGoalsSaved);
   const getTotalInvestments = useStore((s) => s.getTotalInvestments);
-  const getMonthlyStats = useStore((s) => s.getMonthlyStats);
   const balanceVisible = useStore((s) => s.balanceVisible);
+  const toggleBalanceVisible = useStore((s) => s.toggleBalanceVisible);
   const getWalletBalances = useStore((s) => s.getWalletBalances);
 
   const [showInfoModal, setShowInfoModal] = useState(false);
 
-  const netWorth = getNetWorth();
-  const totalLiquid = getTotalLiquidBalance();
-  const totalGoals = getTotalGoalsSaved();
-  const totalInvestments = getTotalInvestments();
-  const { income, expense } = getMonthlyStats();
-  const walletBalances = getWalletBalances();
+  const netWorth = getNetWorth ? getNetWorth() : 0;
+  const totalLiquid = getTotalLiquidBalance ? getTotalLiquidBalance() : 0;
+  const totalGoals = getTotalGoalsSaved ? getTotalGoalsSaved() : 0;
+  const totalInvestments = getTotalInvestments ? getTotalInvestments() : 0;
+  const { income, expense } = getMonthlyStats ? getMonthlyStats() : { income: 0, expense: 0 };
+  const walletBalances = getWalletBalances ? getWalletBalances() : {};
   const MASK = '••••••';
 
   return (
@@ -228,7 +228,7 @@ const HeroCard = () => {
 
       {/* Wallet Pills (Clean White with Zinc Borders) */}
       <div style={{ display: 'flex', gap: 6, marginTop: 10, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' }}>
-        {WALLETS.filter((w) => walletBalances[w.id] > 0).map((wallet) => (
+        {WALLETS.filter((w) => (walletBalances?.[w.id] || 0) > 0).map((wallet) => (
           <div
             key={wallet.id}
             style={{
