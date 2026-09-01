@@ -11,18 +11,18 @@ const HeroCard = () => {
   const getTotalLiquidBalance = useStore((s) => s.getTotalLiquidBalance);
   const getTotalGoalsSaved = useStore((s) => s.getTotalGoalsSaved);
   const getTotalInvestments = useStore((s) => s.getTotalInvestments);
+  const getMonthlyStats = useStore((s) => s.getMonthlyStats);
   const balanceVisible = useStore((s) => s.balanceVisible);
   const toggleBalanceVisible = useStore((s) => s.toggleBalanceVisible);
-  const getWalletBalances = useStore((s) => s.getWalletBalances);
+  const walletBalances = useStore((s) => s.walletBalances) || {};
 
   const [showInfoModal, setShowInfoModal] = useState(false);
 
-  const netWorth = getNetWorth ? getNetWorth() : 0;
-  const totalLiquid = getTotalLiquidBalance ? getTotalLiquidBalance() : 0;
-  const totalGoals = getTotalGoalsSaved ? getTotalGoalsSaved() : 0;
-  const totalInvestments = getTotalInvestments ? getTotalInvestments() : 0;
-  const { income, expense } = getMonthlyStats ? getMonthlyStats() : { income: 0, expense: 0 };
-  const walletBalances = getWalletBalances ? getWalletBalances() : {};
+  const netWorth = typeof getNetWorth === 'function' ? getNetWorth() : 0;
+  const totalLiquid = typeof getTotalLiquidBalance === 'function' ? getTotalLiquidBalance() : 0;
+  const totalGoals = typeof getTotalGoalsSaved === 'function' ? getTotalGoalsSaved() : 0;
+  const totalInvestments = typeof getTotalInvestments === 'function' ? getTotalInvestments() : 0;
+  const { income, expense } = typeof getMonthlyStats === 'function' ? getMonthlyStats() : { income: 0, expense: 0 };
   const MASK = '••••••';
 
   return (

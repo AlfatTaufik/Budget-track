@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import './App.css';
 
@@ -12,7 +12,85 @@ import BudgetsPage from './components/Budgets/BudgetsPage';
 import LoginPage from './components/Auth/LoginPage';
 import Toast from './components/Common/Toast';
 import useStore from './store/useStore';
-import { Plus, Loader2, Wallet } from 'lucide-react';
+import { Plus, Loader2, Wallet, RefreshCw } from 'lucide-react';
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('App Error Boundary caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            minHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'var(--bg-base)',
+            padding: 24,
+            textAlign: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: '#18181B',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#FFFFFF',
+              marginBottom: 16,
+            }}
+          >
+            <Wallet size={24} />
+          </div>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
+            Terjadi Kesalahan Tampilan
+          </h2>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', maxWidth: 320, marginBottom: 20, lineHeight: 1.5 }}>
+            Halaman sedang diperbarui. Silakan muat ulang untuk memulihkan tampilan.
+          </p>
+          <button
+            onClick={() => {
+              localStorage.clear();
+              window.location.reload();
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '10px 18px',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: '#18181B',
+              color: '#FFFFFF',
+              border: 'none',
+              fontSize: '0.875rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            <RefreshCw size={14} /> Muat Ulang Aplikasi
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const pageVariants = {
   initial: { opacity: 0, y: 8 },
@@ -27,13 +105,24 @@ const PAGES = {
   budgets: BudgetsPage,
 };
 
-function App() {
+function AppContent() {
   const [activePage, setActivePage] = useState('dashboard');
   const [showModal, setShowModal] = useState(false);
 
   const user = useStore((s) => s.user);
   const authLoading = useStore((s) => s.authLoading);
+  const setAuthLoading = useStore((s) => s.setAuthLoading);
   const setUser = useStore((s) => s.setUser);
+
+  // Safety Timeout: Never hang loading screen indefinitely
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (useStore.getState().authLoading) {
+        setAuthLoading(false);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [setAuthLoading]);
 
   // Loading Screen (StudyTracker Clean Zinc Style)
   if (authLoading) {
@@ -77,7 +166,7 @@ function App() {
     return <LoginPage onLogin={setUser} />;
   }
 
-  const PageComponent = PAGES[activePage];
+  const PageComponent = PAGES[activePage] || DashboardPage;
 
   return (
     <>
@@ -120,6 +209,14 @@ function App() {
       {/* Global Instant Feedback Toast */}
       <Toast />
     </>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }
 

@@ -43,6 +43,7 @@ const useStore = create(
       budgets: [],
       goals: [],
       investments: [],
+      walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
       tags: DEFAULT_TAGS,
       expenseCategories: EXPENSE_CATEGORIES,
       incomeCategories: INCOME_CATEGORIES,
@@ -56,7 +57,7 @@ const useStore = create(
           return;
         }
         try {
-          const [transactions, budgets, goals, investments] = await Promise.all([
+          const [transactions, budgets, goals, walletBalances, investments] = await Promise.all([
             db.fetchTransactions(userId).catch((err) => {
               console.warn('fetchTransactions error:', err);
               return [];
@@ -68,6 +69,10 @@ const useStore = create(
             db.fetchGoals(userId).catch((err) => {
               console.warn('fetchGoals error:', err);
               return [];
+            }),
+            db.fetchWalletBalances(userId).catch((err) => {
+              console.warn('fetchWalletBalances error:', err);
+              return {};
             }),
             db.fetchInvestments(userId).catch((err) => {
               console.warn('fetchInvestments error:', err);
@@ -99,11 +104,15 @@ const useStore = create(
             amount: parseFloat(inv.amount),
           }));
 
+          const defaultBalances = { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 };
+          const mergedBalances = { ...defaultBalances, ...(walletBalances || {}) };
+
           set({
             transactions: formattedTxs,
             budgets: formattedBudgets,
             goals: formattedGoals,
             investments: formattedInvestments,
+            walletBalances: mergedBalances,
             dataLoaded: true,
           });
         } catch (error) {
@@ -126,9 +135,18 @@ const useStore = create(
         };
 
         // Instant Local Update
-        set((state) => ({
-          transactions: [newTx, ...state.transactions],
-        }));
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+          if (tx.type === 'expense') {
+            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount;
+          } else {
+            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) + tx.amount;
+          }
+          return {
+            transactions: [newTx, ...state.transactions],
+            walletBalances: newBalances,
+          };
+        });
 
         get().showToast(tx.type === 'expense' ? 'Pengeluaran berhasil dicatat! ✨' : 'Pemasukan berhasil dicatat! ✨');
 
@@ -146,6 +164,10 @@ const useStore = create(
                 ),
               }));
             }
+
+            // Sync wallet balance to Supabase
+            const currentBalance = get().walletBalances[tx.wallet];
+            await db.upsertWalletBalance(tx.wallet, currentBalance, user.id);
           } catch (error) {
             console.error('Failed to sync transaction to Supabase:', error);
           }
@@ -154,16 +176,32 @@ const useStore = create(
 
       deleteTransaction: async (id) => {
         const user = get().user;
+        const txToDelete = get().transactions.find((tx) => tx.id === id);
 
-        set((state) => ({
-          transactions: state.transactions.filter((tx) => tx.id !== id),
-        }));
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+          if (txToDelete) {
+            if (txToDelete.type === 'expense') {
+              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
+            } else {
+              newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) - txToDelete.amount;
+            }
+          }
+          return {
+            transactions: state.transactions.filter((tx) => tx.id !== id),
+            walletBalances: newBalances,
+          };
+        });
 
         get().showToast('Transaksi berhasil dihapus.');
 
         if (user && isValidUUID(user.id)) {
           try {
             await db.deleteTransactionById(id, user.id);
+            if (txToDelete) {
+              const currentBalance = get().walletBalances[txToDelete.wallet];
+              await db.upsertWalletBalance(txToDelete.wallet, currentBalance, user.id);
+            }
           } catch (error) {
             console.error('Failed to delete transaction from Supabase:', error);
           }
@@ -427,6 +465,7 @@ const useStore = create(
           transactions: [],
           budgets: [],
           goals: [],
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           investments: [],
           tags: DEFAULT_TAGS,
           expenseCategories: EXPENSE_CATEGORIES,
@@ -445,6 +484,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           dataLoaded: true,
         });
 
@@ -473,6 +513,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
+          walletBalances: { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 },
           dataLoaded: false,
         });
       },
@@ -494,28 +535,12 @@ const useStore = create(
       },
 
       // --- Computed Getters ---
-      getWalletBalances: () => {
-        const txs = get().transactions;
-        const balances = { cash: 0, bca: 0, mandiri: 0, paypal: 0, gopay: 0, ovo: 0, shopeepay: 0, dana: 0 };
-        txs.forEach((tx) => {
-          const w = tx.wallet || 'cash';
-          if (balances[w] === undefined) balances[w] = 0;
-          const amt = parseFloat(tx.amount || 0);
-          if (tx.type === 'income') {
-            balances[w] += amt;
-          } else {
-            balances[w] -= amt;
-          }
-        });
-        return balances;
-      },
-
       getTotalBalance: () => {
         return get().getTotalLiquidBalance();
       },
 
       getTotalLiquidBalance: () => {
-        const balances = get().getWalletBalances();
+        const balances = get().walletBalances;
         const usdRate = get().usdRate || 16250;
         return Object.entries(balances).reduce((sum, [walletId, v]) => {
           if (walletId === 'paypal') {
