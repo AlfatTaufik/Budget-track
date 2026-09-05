@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { Plus, Trash2, Pencil, Check, TrendingUp } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, TrendingUp, Eye, EyeOff, RotateCcw, Filter, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { getCategoryById } from '../../utils/categories';
 import { formatIDR, formatCompact } from '../../utils/formatters';
@@ -82,14 +82,23 @@ const AnalyticsPage = () => {
   const deleteInvestment = useStore((s) => s.deleteInvestment);
   const expenseCategories = useStore((s) => s.expenseCategories || []);
   const incomeCategories = useStore((s) => s.incomeCategories || []);
+  const hiddenExpenseCategories = useStore((s) => s.hiddenExpenseCategories || []);
+  const toggleHideExpenseCategory = useStore((s) => s.toggleHideExpenseCategory);
+  const setHiddenExpenseCategories = useStore((s) => s.setHiddenExpenseCategories);
+  const resetHiddenExpenseCategories = useStore((s) => s.resetHiddenExpenseCategories);
   const allCategories = [...expenseCategories, ...incomeCategories];
 
   const [showAddInv, setShowAddInv] = useState(false);
   const [editingInv, setEditingInv] = useState(null);
   const [invInput, setInvInput] = useState('');
   const [topUpInv, setTopUpInv] = useState(null);
+  const [showHiddenList, setShowHiddenList] = useState(true);
 
-  const categoryExpenses = getCategoryExpenses();
+  // All category expenses (unfiltered raw)
+  const allMonthExpenses = getCategoryExpenses(new Date(), []);
+  // Filtered by hidden categories
+  const categoryExpenses = getCategoryExpenses(new Date(), hiddenExpenseCategories);
+
   const budgetProgress = getBudgetProgress();
   const totalLiquid = getTotalLiquidBalance();
   const totalGoals = getTotalGoalsSaved();
@@ -112,11 +121,13 @@ const AnalyticsPage = () => {
     setInvInput('');
   };
 
+  // Active Pie Data
   const pieData = Object.entries(categoryExpenses)
     .filter(([, v]) => v > 0)
     .map(([catId, value]) => {
       const cat = getCategoryById(catId, allCategories);
       return {
+        id: catId,
         name: cat.label,
         value,
         fill: cat.color,
@@ -127,7 +138,56 @@ const AnalyticsPage = () => {
     })
     .sort((a, b) => b.value - a.value);
 
-  const totalExpense = pieData.reduce((s, d) => s + d.value, 0);
+  // Hidden categories data
+  const hiddenData = Object.entries(allMonthExpenses)
+    .filter(([catId, v]) => v > 0 && hiddenExpenseCategories.includes(catId))
+    .map(([catId, value]) => {
+      const cat = getCategoryById(catId, allCategories);
+      return {
+        id: catId,
+        name: cat.label,
+        value,
+        fill: cat.color,
+        iconName: cat.iconName,
+        colorBg: cat.colorBg,
+        colorBorder: cat.colorBorder,
+      };
+    })
+    .sort((a, b) => b.value - a.value);
+
+  // All categories having transactions this month
+  const allUsedCategories = Object.entries(allMonthExpenses)
+    .filter(([, v]) => v > 0)
+    .map(([catId, value]) => {
+      const cat = getCategoryById(catId, allCategories);
+      const isHidden = hiddenExpenseCategories.includes(catId);
+      return {
+        id: catId,
+        name: cat.label,
+        value,
+        fill: cat.color,
+        iconName: cat.iconName,
+        colorBg: cat.colorBg,
+        colorBorder: cat.colorBorder,
+        isHidden,
+      };
+    })
+    .sort((a, b) => b.value - a.value);
+
+  const totalActiveExpense = pieData.reduce((s, d) => s + d.value, 0);
+  const totalHiddenExpense = hiddenData.reduce((s, d) => s + d.value, 0);
+  const grandTotalExpense = totalActiveExpense + totalHiddenExpense;
+
+  // Check active preset
+  const isPresetAll = hiddenExpenseCategories.length === 0;
+  const isPresetNoBills =
+    hiddenExpenseCategories.length === 1 && hiddenExpenseCategories.includes('bills');
+  const allUsedCategoryIds = allUsedCategories.map((c) => c.id);
+  const isPresetOnlyBills =
+    allUsedCategoryIds.includes('bills') &&
+    allUsedCategoryIds.length > 1 &&
+    allUsedCategoryIds.filter((id) => id !== 'bills').every((id) => hiddenExpenseCategories.includes(id)) &&
+    !hiddenExpenseCategories.includes('bills');
 
   return (
     <div className="page">
@@ -372,8 +432,8 @@ const AnalyticsPage = () => {
         )}
       </motion.div>
 
-      {/* Donut Chart */}
-      {pieData.length > 0 && (
+      {/* Category Filter & Spending Breakdown Section */}
+      {allUsedCategories.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -381,69 +441,351 @@ const AnalyticsPage = () => {
           className="glass-card"
           style={{ padding: '16px', marginBottom: 14 }}
         >
+          {/* Header with Title and Reset */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <h3 style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)' }}>Pengeluaran per Kategori</h3>
-            <span className="amount" style={{ fontSize: '0.875rem', color: 'var(--color-expense)' }}>
-              {formatCompact(totalExpense)}
-            </span>
-          </div>
-          <ResponsiveContainer width="100%" height={180}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                innerRadius={48}
-                outerRadius={76}
-                paddingAngle={2}
-                dataKey="value"
-                labelLine={false}
-                label={renderCustomLabel}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Filter size={15} color="var(--text-primary)" />
+              <h3 style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)' }}>
+                Filter & Analisis Pengeluaran
+              </h3>
+            </div>
+            {hiddenExpenseCategories.length > 0 && (
+              <button
+                type="button"
+                onClick={resetHiddenExpenseCategories}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '3px 8px',
+                  borderRadius: 'var(--radius-full)',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: '#FFFFFF',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
               >
-                {pieData.map((entry, index) => (
-                  <Cell key={index} fill={entry.fill} stroke="#FFFFFF" strokeWidth={2} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-          </ResponsiveContainer>
+                <RotateCcw size={10} /> Reset Semua
+              </button>
+            )}
+          </div>
 
-          {/* Solid Legend with Lucide Icons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-            {pieData.slice(0, 5).map((d) => (
-              <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div
+          {/* Quick Presets Tabs */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={resetHiddenExpenseCategories}
+              style={{
+                padding: '5px 11px',
+                borderRadius: 'var(--radius-full)',
+                border: `1.5px solid ${isPresetAll ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                backgroundColor: isPresetAll ? 'var(--text-primary)' : '#FFFFFF',
+                color: isPresetAll ? '#FFFFFF' : 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              Semua Pos
+            </button>
+
+            {allUsedCategoryIds.includes('bills') && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setHiddenExpenseCategories(['bills'])}
                   style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 'var(--radius-sm)',
-                    backgroundColor: d.colorBg,
-                    border: `1px solid ${d.colorBorder || '#E4E4E7'}`,
+                    padding: '5px 11px',
+                    borderRadius: 'var(--radius-full)',
+                    border: `1.5px solid ${isPresetNoBills ? '#EA580C' : 'var(--border-subtle)'}`,
+                    backgroundColor: isPresetNoBills ? '#FFF7ED' : '#FFFFFF',
+                    color: isPresetNoBills ? '#EA580C' : 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    fontWeight: isPresetNoBills ? 700 : 500,
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
+                    gap: 4,
+                    transition: 'all 0.15s',
                   }}
+                  title="Sembunyikan tagihan untuk melihat pengeluaran belanja/lifestyle saja"
                 >
-                  <AppIcon name={d.iconName} size={11} color={d.fill} />
+                  <EyeOff size={12} /> Tanpa Tagihan
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const hideOthers = allUsedCategoryIds.filter((id) => id !== 'bills');
+                    setHiddenExpenseCategories(hideOthers);
+                  }}
+                  style={{
+                    padding: '5px 11px',
+                    borderRadius: 'var(--radius-full)',
+                    border: `1.5px solid ${isPresetOnlyBills ? '#4F46E5' : 'var(--border-subtle)'}`,
+                    backgroundColor: isPresetOnlyBills ? '#EEF2FF' : '#FFFFFF',
+                    color: isPresetOnlyBills ? '#4F46E5' : 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    fontWeight: isPresetOnlyBills ? 700 : 500,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    transition: 'all 0.15s',
+                  }}
+                  title="Fokus tagihan saja untuk melihat total tagihan bulan ini"
+                >
+                  <Eye size={12} /> Hanya Tagihan
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Interactive Category Visibility Chips (Horizontal Scroll) */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              overflowX: 'auto',
+              paddingBottom: 6,
+              marginBottom: 12,
+              scrollbarWidth: 'none',
+            }}
+          >
+            {allUsedCategories.map((cat) => {
+              const isHidden = cat.isHidden;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => toggleHideExpenseCategory(cat.id)}
+                  style={{
+                    flexShrink: 0,
+                    padding: '5px 10px',
+                    borderRadius: 'var(--radius-full)',
+                    border: `1.5px solid ${isHidden ? 'var(--border-subtle)' : cat.fill}`,
+                    backgroundColor: isHidden ? '#F4F4F5' : cat.colorBg,
+                    color: isHidden ? 'var(--text-muted)' : cat.fill,
+                    fontSize: '0.6875rem',
+                    fontWeight: isHidden ? 500 : 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    opacity: isHidden ? 0.65 : 1,
+                    textDecoration: isHidden ? 'line-through' : 'none',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={isHidden ? `Klik untuk tampilkan kembali pos ${cat.name}` : `Klik untuk sembunyikan pos ${cat.name}`}
+                >
+                  <AppIcon name={cat.iconName} size={12} color={isHidden ? '#A1A1AA' : cat.fill} />
+                  <span>{cat.name}</span>
+                  <span style={{ fontSize: '0.625rem', opacity: 0.85 }}>({formatCompact(cat.value)})</span>
+                  {isHidden ? <EyeOff size={11} color="#71717A" /> : <Eye size={11} color={cat.fill} />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Comparison Stats Grid (Active vs Hidden) */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: hiddenData.length > 0 ? '1fr 1fr' : '1fr',
+              gap: 8,
+              padding: '10px 12px',
+              backgroundColor: 'var(--bg-card-subtle)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-subtle)',
+              marginBottom: 14,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: '0.625rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2 }}>
+                Pengeluaran Aktif ({pieData.length} Pos)
+              </div>
+              <div className="amount" style={{ fontSize: '1.0625rem', color: 'var(--color-expense)', fontWeight: 700 }}>
+                {formatIDR(totalActiveExpense)}
+              </div>
+              {grandTotalExpense > 0 && hiddenData.length > 0 && (
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {((totalActiveExpense / grandTotalExpense) * 100).toFixed(0)}% dari total pengeluaran
                 </div>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', flex: 1, fontWeight: 500 }}>
-                  {d.name}
-                </span>
-                <div style={{ textAlign: 'right' }}>
-                  <span
-                    className="amount"
-                    style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 600 }}
-                  >
-                    {formatCompact(d.value)}
-                  </span>
-                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginLeft: 6 }}>
-                    {((d.value / totalExpense) * 100).toFixed(0)}%
-                  </span>
+              )}
+            </div>
+
+            {hiddenData.length > 0 && (
+              <div style={{ borderLeft: '1px solid var(--border-subtle)', paddingLeft: 10 }}>
+                <div style={{ fontSize: '0.625rem', color: '#EA580C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <EyeOff size={10} /> Disembunyikan ({hiddenData.length} Pos)
+                </div>
+                <div className="amount" style={{ fontSize: '1.0625rem', color: '#EA580C', fontWeight: 700 }}>
+                  {formatIDR(totalHiddenExpense)}
+                </div>
+                <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {((totalHiddenExpense / grandTotalExpense) * 100).toFixed(0)}% dari total pengeluaran
                 </div>
               </div>
-            ))}
+            )}
           </div>
+
+          {/* Donut Chart or Empty state */}
+          {pieData.length > 0 ? (
+            <>
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={48}
+                    outerRadius={76}
+                    paddingAngle={2}
+                    dataKey="value"
+                    labelLine={false}
+                    label={renderCustomLabel}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={index} fill={entry.fill} stroke="#FFFFFF" strokeWidth={2} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* Active Legend with Lucide Icons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                {pieData.map((d) => (
+                  <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div
+                      style={{
+                        width: 22,
+                        height: 22,
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: d.colorBg,
+                        border: `1px solid ${d.colorBorder || '#E4E4E7'}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <AppIcon name={d.iconName} size={11} color={d.fill} />
+                    </div>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', flex: 1, fontWeight: 500 }}>
+                      {d.name}
+                    </span>
+                    <div style={{ textAlign: 'right' }}>
+                      <span
+                        className="amount"
+                        style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 600 }}
+                      >
+                        {formatCompact(d.value)}
+                      </span>
+                      <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginLeft: 6 }}>
+                        {totalActiveExpense > 0 ? `${((d.value / totalActiveExpense) * 100).toFixed(0)}%` : '0%'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '24px 12px', color: 'var(--text-muted)', fontSize: '0.8125rem' }}>
+              Semua pos pengeluaran sedang disembunyikan.
+              <div style={{ marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={resetHiddenExpenseCategories}
+                  style={{
+                    padding: '5px 12px',
+                    borderRadius: 'var(--radius-full)',
+                    backgroundColor: '#18181B',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Tampilkan Semua Pos
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Hidden Categories Sub-Card */}
+          {hiddenData.length > 0 && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: '#FFF7ED',
+                border: '1px solid #FED7AA',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  cursor: 'pointer',
+                  userSelect: 'none',
+                }}
+                onClick={() => setShowHiddenList(!showHiddenList)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem', fontWeight: 600, color: '#C2410C' }}>
+                  <EyeOff size={13} />
+                  <span>Pos yang Disembunyikan ({hiddenData.length})</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#C2410C', fontSize: '0.75rem' }}>
+                  <span className="amount" style={{ fontWeight: 700 }}>{formatCompact(totalHiddenExpense)}</span>
+                  {showHiddenList ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </div>
+              </div>
+
+              {showHiddenList && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px dashed #FDBA74' }}>
+                  {hiddenData.map((d) => (
+                    <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <AppIcon name={d.iconName} size={12} color="#C2410C" />
+                        <span style={{ color: '#9A3412', fontWeight: 500 }}>{d.name}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="amount" style={{ color: '#C2410C', fontWeight: 600 }}>{formatIDR(d.value)}</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleHideExpenseCategory(d.id)}
+                          style={{
+                            padding: '2px 6px',
+                            borderRadius: 'var(--radius-full)',
+                            border: '1px solid #FDBA74',
+                            backgroundColor: '#FFFFFF',
+                            color: '#C2410C',
+                            fontSize: '0.625rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                          }}
+                          title="Tampilkan kembali kategori ini"
+                        >
+                          <Eye size={10} /> Tampilkan
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </motion.div>
       )}
 

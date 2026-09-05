@@ -49,6 +49,20 @@ const useStore = create(
       incomeCategories: INCOME_CATEGORIES,
       balanceVisible: true,
       dataLoaded: false,
+      hiddenExpenseCategories: [], // Category IDs hidden from expense calculations/views (e.g. 'bills')
+
+      // --- Hidden Categories Handlers ---
+      toggleHideExpenseCategory: (catId) => {
+        set((state) => {
+          const current = state.hiddenExpenseCategories || [];
+          const updated = current.includes(catId)
+            ? current.filter((id) => id !== catId)
+            : [...current, catId];
+          return { hiddenExpenseCategories: updated };
+        });
+      },
+      setHiddenExpenseCategories: (categories) => set({ hiddenExpenseCategories: categories || [] }),
+      resetHiddenExpenseCategories: () => set({ hiddenExpenseCategories: [] }),
 
       // --- Load Data from Supabase (Single Source of Truth) ---
       loadUserData: async (userId) => {
@@ -270,6 +284,103 @@ const useStore = create(
             }
           } catch (error) {
             console.error('Failed to delete transaction from Supabase:', error);
+          }
+        }
+      },
+
+      // --- Update Existing Transaction ---
+      updateTransaction: async (id, updatedTx) => {
+        const user = get().user;
+        const usdRate = get().usdRate || 16250;
+        const oldTx = get().transactions.find((tx) => tx.id === id);
+        if (!oldTx) return;
+
+        const isUsd = updatedTx.wallet === 'paypal' || updatedTx.currency === 'USD';
+        const newTx = {
+          ...oldTx,
+          ...updatedTx,
+          currency: isUsd ? 'USD' : 'IDR',
+          exchangeRate: isUsd ? (updatedTx.exchangeRate || usdRate) : 1,
+        };
+
+        // Instant Local Balance & State Update
+        set((state) => {
+          const newBalances = { ...state.walletBalances };
+
+          // 1. Revert Old Transaction Impact on Balances
+          if (oldTx.type === 'expense') {
+            newBalances[oldTx.wallet] = (newBalances[oldTx.wallet] || 0) + oldTx.amount;
+          } else if (oldTx.type === 'income') {
+            newBalances[oldTx.wallet] = (newBalances[oldTx.wallet] || 0) - oldTx.amount;
+          } else if (oldTx.type === 'transfer') {
+            newBalances[oldTx.wallet] = (newBalances[oldTx.wallet] || 0) + oldTx.amount;
+            if (oldTx.toWallet) {
+              let oldTargetAmt = oldTx.amount;
+              if (oldTx.wallet === 'paypal' && oldTx.toWallet !== 'paypal') {
+                oldTargetAmt = oldTx.amount * usdRate;
+              } else if (oldTx.wallet !== 'paypal' && oldTx.toWallet === 'paypal') {
+                oldTargetAmt = oldTx.amount / usdRate;
+              }
+              newBalances[oldTx.toWallet] = (newBalances[oldTx.toWallet] || 0) - oldTargetAmt;
+            }
+          }
+
+          // 2. Apply New Transaction Impact on Balances
+          if (newTx.type === 'expense') {
+            newBalances[newTx.wallet] = (newBalances[newTx.wallet] || 0) - newTx.amount;
+          } else if (newTx.type === 'income') {
+            newBalances[newTx.wallet] = (newBalances[newTx.wallet] || 0) + newTx.amount;
+          } else if (newTx.type === 'transfer') {
+            newBalances[newTx.wallet] = (newBalances[newTx.wallet] || 0) - newTx.amount;
+            if (newTx.toWallet) {
+              let newTargetAmt = newTx.amount;
+              if (newTx.wallet === 'paypal' && newTx.toWallet !== 'paypal') {
+                newTargetAmt = newTx.amount * usdRate;
+              } else if (newTx.wallet !== 'paypal' && newTx.toWallet === 'paypal') {
+                newTargetAmt = newTx.amount / usdRate;
+              }
+              newBalances[newTx.toWallet] = (newBalances[newTx.toWallet] || 0) + newTargetAmt;
+            }
+          }
+
+          return {
+            transactions: state.transactions.map((tx) => (tx.id === id ? newTx : tx)),
+            walletBalances: newBalances,
+          };
+        });
+
+        get().showToast('Transaksi berhasil diperbarui! ✨');
+
+        // Sync to Supabase if valid user
+        if (user && isValidUUID(user.id)) {
+          try {
+            const noteText = newTx.type === 'transfer' && newTx.toWallet
+              ? (newTx.note ? (newTx.note.includes('[Transfer ke') ? newTx.note : `[Transfer ke ${newTx.toWallet}] ${newTx.note}`) : `[Transfer ke ${newTx.toWallet}]`)
+              : (newTx.note || null);
+
+            await db.updateTransaction(
+              id,
+              {
+                type: newTx.type,
+                amount: newTx.amount,
+                category: newTx.category || 'other_expense',
+                wallet: newTx.wallet,
+                note: noteText,
+                date: newTx.date,
+              },
+              user.id
+            );
+
+            // Upsert all affected wallet balances to Supabase
+            const affectedWallets = Array.from(
+              new Set([oldTx.wallet, newTx.wallet, oldTx.toWallet, newTx.toWallet].filter(Boolean))
+            );
+            for (const w of affectedWallets) {
+              const bal = get().walletBalances[w] || 0;
+              await db.upsertWalletBalance(w, bal, user.id);
+            }
+          } catch (error) {
+            console.error('Failed to update transaction in Supabase:', error);
           }
         }
       },
@@ -844,9 +955,10 @@ const useStore = create(
         return get().getTotalLiquidBalance() + get().getTotalGoalsSaved() + get().getTotalInvestments();
       },
 
-      getMonthlyStats: (date = new Date()) => {
+      getMonthlyStats: (date = new Date(), excludedCategories = null) => {
         const txs = get().transactions;
         const usdRate = get().usdRate || 16250;
+        const excluded = Array.isArray(excludedCategories) ? excludedCategories : (get().hiddenExpenseCategories || []);
         const month = date.getMonth();
         const year = date.getFullYear();
         const monthTxs = txs.filter((tx) => {
@@ -860,7 +972,7 @@ const useStore = create(
             return sum + idr;
           }, 0);
         const expense = monthTxs
-          .filter((tx) => tx.type === 'expense')
+          .filter((tx) => tx.type === 'expense' && !excluded.includes(tx.category))
           .reduce((sum, tx) => {
             const idr = tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount;
             return sum + idr;
@@ -899,14 +1011,15 @@ const useStore = create(
         return result;
       },
 
-      getCategoryExpenses: (date = new Date()) => {
+      getCategoryExpenses: (date = new Date(), excludedCategories = null) => {
         const txs = get().transactions;
         const usdRate = get().usdRate || 16250;
+        const excluded = Array.isArray(excludedCategories) ? excludedCategories : (get().hiddenExpenseCategories || []);
         const month = date.getMonth();
         const year = date.getFullYear();
         const monthExpenses = txs.filter((tx) => {
           const d = new Date(tx.date);
-          return tx.type === 'expense' && d.getMonth() === month && d.getFullYear() === year;
+          return tx.type === 'expense' && d.getMonth() === month && d.getFullYear() === year && !excluded.includes(tx.category);
         });
         const byCategory = {};
         monthExpenses.forEach((tx) => {

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Trash2, Inbox, RotateCcw, X, ArrowLeftRight } from 'lucide-react';
+import { Search, Trash2, Inbox, RotateCcw, X, ArrowLeftRight, Pencil, Eye, EyeOff, Filter } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { getCategoryById, getWalletById, WALLETS } from '../../utils/categories';
 import { formatIDR, groupByDate, isToday, isYesterday, formatDate } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 import ConvertToTransferModal from '../Modal/ConvertToTransferModal';
+import EditTransactionModal from '../Modal/EditTransactionModal';
 
-const TransactionItem = ({ tx, onDelete, onConvert, extraCategories = [] }) => {
+const TransactionItem = ({ tx, onDelete, onConvert, onEdit, extraCategories = [] }) => {
   const isTransfer = tx.type === 'transfer';
   const cat = isTransfer
     ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#EEF2FF' }
@@ -139,6 +140,31 @@ const TransactionItem = ({ tx, onDelete, onConvert, extraCategories = [] }) => {
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowActions(false);
+                  onEdit(tx);
+                }}
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                title="Edit transaksi"
+              >
+                <Pencil size={13} />
+              </button>
+            )}
+
             {!isTransfer && onConvert && (
               <button
                 type="button"
@@ -224,12 +250,16 @@ const TransactionList = () => {
   const deleteTransaction = useStore((s) => s.deleteTransaction);
   const expenseCategories = useStore((s) => s.expenseCategories || []);
   const incomeCategories = useStore((s) => s.incomeCategories || []);
+  const hiddenExpenseCategories = useStore((s) => s.hiddenExpenseCategories || []);
+  const toggleHideExpenseCategory = useStore((s) => s.toggleHideExpenseCategory);
   const allCategories = [...expenseCategories, ...incomeCategories];
 
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all'); // all | expense | income | transfer
   const [filterCategory, setFilterCategory] = useState('all');
+  const [excludeBills, setExcludeBills] = useState(false);
   const [convertTx, setConvertTx] = useState(null);
+  const [editTx, setEditTx] = useState(null);
 
   // Available categories based on active filterType
   const availableFilterCategories = filterType === 'expense'
@@ -249,7 +279,8 @@ const TransactionList = () => {
       tx.tags?.some((t) => t.toLowerCase().includes(cleanSearch));
     const matchType = filterType === 'all' || tx.type === filterType;
     const matchCategory = filterCategory === 'all' || tx.category === filterCategory;
-    return matchSearch && matchType && matchCategory;
+    const matchExclude = !excludeBills || tx.category !== 'bills';
+    return matchSearch && matchType && matchCategory && matchExclude;
   });
 
   const grouped = groupByDate(filtered);
@@ -269,9 +300,10 @@ const TransactionList = () => {
     setSearch('');
     setFilterType('all');
     setFilterCategory('all');
+    setExcludeBills(false);
   };
 
-  const isFiltering = search !== '' || filterType !== 'all' || filterCategory !== 'all';
+  const isFiltering = search !== '' || filterType !== 'all' || filterCategory !== 'all' || excludeBills;
 
   return (
     <div className="page">
@@ -323,7 +355,7 @@ const TransactionList = () => {
         )}
       </div>
 
-      {/* Primary Type Filter Tabs */}
+      {/* Primary Type Filter Tabs & Exclude Quick Action */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {[
@@ -355,27 +387,54 @@ const TransactionList = () => {
           })}
         </div>
 
-        {isFiltering && (
-          <button
-            onClick={handleResetFilters}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 9px',
-              borderRadius: 'var(--radius-full)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: '#FFFFFF',
-              color: 'var(--text-secondary)',
-              fontSize: '0.6875rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-          >
-            <RotateCcw size={11} /> Reset
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          {filterType !== 'income' && filterType !== 'transfer' && (
+            <button
+              type="button"
+              onClick={() => setExcludeBills(!excludeBills)}
+              style={{
+                padding: '4px 9px',
+                borderRadius: 'var(--radius-full)',
+                border: `1.5px solid ${excludeBills ? '#EA580C' : 'var(--border-subtle)'}`,
+                backgroundColor: excludeBills ? '#FFF7ED' : '#FFFFFF',
+                color: excludeBills ? '#EA580C' : 'var(--text-secondary)',
+                fontSize: '0.6875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                transition: 'all 0.15s',
+              }}
+              title="Sembunyikan atau tampilkan transaksi tagihan"
+            >
+              {excludeBills ? <EyeOff size={11} /> : <Eye size={11} />}
+              {excludeBills ? 'Tanpa Tagihan (Aktif)' : 'Hide Tagihan'}
+            </button>
+          )}
+
+          {isFiltering && (
+            <button
+              onClick={handleResetFilters}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '4px 9px',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: '#FFFFFF',
+                color: 'var(--text-secondary)',
+                fontSize: '0.6875rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s',
+              }}
+            >
+              <RotateCcw size={11} /> Reset
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Category Filter Chips Bar (Horizontal Scroll) */}
@@ -441,8 +500,11 @@ const TransactionList = () => {
 
       {/* Filter Result Stats Header */}
       {isFiltering && (
-        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: 10, display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: 10, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
           <span>Ditemukan <strong>{filtered.length}</strong> transaksi</span>
+          {excludeBills && (
+            <span style={{ color: '#EA580C', fontWeight: 600 }}>• Tagihan Disembunyikan</span>
+          )}
           {filterCategory !== 'all' && (
             <span>Kategori: <strong>{getCategoryById(filterCategory, allCategories).label}</strong></span>
           )}
@@ -499,6 +561,7 @@ const TransactionList = () => {
                       tx={tx}
                       onDelete={deleteTransaction}
                       onConvert={setConvertTx}
+                      onEdit={setEditTx}
                       extraCategories={allCategories}
                     />
                   ))}
@@ -506,6 +569,16 @@ const TransactionList = () => {
               </div>
             </motion.div>
           ))
+        )}
+      </AnimatePresence>
+
+      {/* Edit Transaction Modal */}
+      <AnimatePresence>
+        {editTx && (
+          <EditTransactionModal
+            tx={editTx}
+            onClose={() => setEditTx(null)}
+          />
         )}
       </AnimatePresence>
 

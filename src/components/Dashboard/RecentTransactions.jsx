@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Trash2, ArrowLeftRight } from 'lucide-react';
+import { ChevronRight, Trash2, ArrowLeftRight, Pencil } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { getCategoryById, getWalletById } from '../../utils/categories';
 import { formatIDR, formatDateShort } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 import ConvertToTransferModal from '../Modal/ConvertToTransferModal';
+import EditTransactionModal from '../Modal/EditTransactionModal';
 
-const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert }) => {
+const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert, onEdit }) => {
   const isTransfer = tx.type === 'transfer';
   const cat = isTransfer
     ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#EEF2FF' }
@@ -135,6 +136,32 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert 
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowActions(false);
+                  onEdit(tx);
+                }}
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 'var(--radius-sm)',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+                title="Edit transaksi ini"
+              >
+                <Pencil size={13} />
+              </button>
+            )}
+
             {!isTransfer && onConvert && (
               <button
                 type="button"
@@ -223,6 +250,7 @@ const RecentTransactions = ({ onViewAll }) => {
   const incomeCategories = useStore((s) => s.incomeCategories || []);
   const allCategories = [...expenseCategories, ...incomeCategories];
   const [convertTx, setConvertTx] = useState(null);
+  const [editTx, setEditTx] = useState(null);
 
   const recent = transactions.slice(0, 5);
 
@@ -270,9 +298,20 @@ const RecentTransactions = ({ onViewAll }) => {
             extraCategories={allCategories}
             onDelete={deleteTransaction}
             onConvert={setConvertTx}
+            onEdit={setEditTx}
           />
         ))
       )}
+
+      {/* Edit Transaction Modal */}
+      <AnimatePresence>
+        {editTx && (
+          <EditTransactionModal
+            tx={editTx}
+            onClose={() => setEditTx(null)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Convert to Transfer Modal */}
       <AnimatePresence>
