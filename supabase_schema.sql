@@ -63,6 +63,19 @@ CREATE TABLE IF NOT EXISTS investments (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ── 6. Tabel Custom Categories ─────────────────────────
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  type TEXT CHECK (type IN ('expense', 'income')) NOT NULL DEFAULT 'expense',
+  label TEXT NOT NULL,
+  icon TEXT DEFAULT 'Tag',
+  color TEXT DEFAULT '#4F46E5',
+  color_bg TEXT DEFAULT '#EEF2FF',
+  color_border TEXT DEFAULT '#C7D2FE',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- ══════════════════════════════════════════════════════
 -- Row Level Security (RLS) — Wajib untuk Keamanan
 -- Setiap user hanya bisa akses & ubah data miliknya sendiri
@@ -73,6 +86,18 @@ ALTER TABLE budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE goals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wallet_balances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE investments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies untuk categories
+DROP POLICY IF EXISTS "Users can view own categories" ON categories;
+DROP POLICY IF EXISTS "Users can insert own categories" ON categories;
+DROP POLICY IF EXISTS "Users can update own categories" ON categories;
+DROP POLICY IF EXISTS "Users can delete own categories" ON categories;
+
+CREATE POLICY "Users can view own categories" ON categories FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own categories" ON categories FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own categories" ON categories FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own categories" ON categories FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies untuk transactions
 DROP POLICY IF EXISTS "Users can view own transactions" ON transactions;

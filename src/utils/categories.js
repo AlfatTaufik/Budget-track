@@ -88,13 +88,20 @@ export const CATEGORY_COLOR_OPTIONS = [
 ];
 
 export const getCategoryById = (id, extraCategories = []) => {
-  const all = [...extraCategories, ...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
+  let localCategories = [];
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('flowwallet_custom_categories') : null;
+    if (raw) localCategories = JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  const all = [...extraCategories, ...localCategories, ...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES];
   const found = all.find((c) => c.id === id);
   if (found) return found;
   return {
     id: id || 'other',
-    label: id || 'Lainnya',
-    iconName: 'MoreHorizontal',
+    label: id && id.startsWith('cat_') ? 'Kategori Khusus' : (id || 'Lainnya'),
+    iconName: 'Tag',
     color: '#52525B',
     colorBg: '#F4F4F5',
     colorBorder: '#E4E4E7',

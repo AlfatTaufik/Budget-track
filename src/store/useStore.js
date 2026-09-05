@@ -10,6 +10,28 @@ const isValidUUID = (str) =>
   typeof str === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
+const getStoredCustomCategories = () => {
+  try {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem('flowwallet_custom_categories');
+      if (raw) return JSON.parse(raw);
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+const initialCustom = getStoredCustomCategories();
+const initialExpenseCategories = [
+  ...EXPENSE_CATEGORIES,
+  ...initialCustom.filter((c) => c.type !== 'income' && !EXPENSE_CATEGORIES.some((ec) => ec.id === c.id)),
+];
+const initialIncomeCategories = [
+  ...INCOME_CATEGORIES,
+  ...initialCustom.filter((c) => c.type === 'income' && !INCOME_CATEGORIES.some((ic) => ic.id === c.id)),
+];
+
 const useStore = create(
   persist(
     (set, get) => ({
@@ -45,8 +67,8 @@ const useStore = create(
       investments: [],
       walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
       tags: DEFAULT_TAGS,
-      expenseCategories: EXPENSE_CATEGORIES,
-      incomeCategories: INCOME_CATEGORIES,
+      expenseCategories: initialExpenseCategories,
+      incomeCategories: initialIncomeCategories,
       balanceVisible: true,
       dataLoaded: false,
       hiddenExpenseCategories: [], // Category IDs hidden from expense calculations/views (e.g. 'bills')
@@ -71,7 +93,7 @@ const useStore = create(
           return;
         }
         try {
-          const [transactions, budgets, goals, walletBalances, investments] = await Promise.all([
+          const [transactions, budgets, goals, walletBalances, investments, remoteCategories] = await Promise.all([
             db.fetchTransactions(userId).catch((err) => {
               console.warn('fetchTransactions error:', err);
               return [];
@@ -92,7 +114,51 @@ const useStore = create(
               console.warn('fetchInvestments error:', err);
               return [];
             }),
+            db.fetchCategories(userId).catch((err) => {
+              console.warn('fetchCategories error:', err);
+              return [];
+            }),
           ]);
+
+          // Merge custom categories from DB table, user_metadata, and local storage
+          const userObj = get().user;
+          const metadataCategories = userObj?.user_metadata?.custom_categories || [];
+          const storedLocalCategories = getStoredCustomCategories();
+
+          const allCustomMap = new Map();
+          [...storedLocalCategories, ...metadataCategories, ...(remoteCategories || [])].forEach((c) => {
+            if (c?.id && c?.label) {
+              allCustomMap.set(c.id, {
+                id: c.id,
+                label: c.label,
+                type: c.type || 'expense',
+                iconName: c.iconName || c.icon || 'Tag',
+                color: c.color || '#4F46E5',
+                colorBg: c.colorBg || c.color_bg || '#EEF2FF',
+                colorBorder: c.colorBorder || c.color_border || '#C7D2FE',
+              });
+            }
+          });
+          const mergedCustom = Array.from(allCustomMap.values());
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('flowwallet_custom_categories', JSON.stringify(mergedCustom));
+            }
+          } catch {
+            // ignore
+          }
+
+          const customExpenses = mergedCustom.filter((c) => c.type !== 'income');
+          const customIncomes = mergedCustom.filter((c) => c.type === 'income');
+
+          const finalExpenseCategories = [
+            ...EXPENSE_CATEGORIES,
+            ...customExpenses.filter((c) => !EXPENSE_CATEGORIES.some((ec) => ec.id === c.id)),
+          ];
+          const finalIncomeCategories = [
+            ...INCOME_CATEGORIES,
+            ...customIncomes.filter((c) => !INCOME_CATEGORIES.some((ic) => ic.id === c.id)),
+          ];
 
           const formattedTxs = (transactions || []).map((tx) => {
             let toWallet = tx.to_wallet || tx.toWallet || null;
@@ -139,6 +205,8 @@ const useStore = create(
             goals: formattedGoals,
             investments: formattedInvestments,
             walletBalances: mergedBalances,
+            expenseCategories: finalExpenseCategories,
+            incomeCategories: finalIncomeCategories,
             dataLoaded: true,
           });
         } catch (error) {
@@ -820,31 +888,98 @@ const useStore = create(
       },
 
       // --- Custom Categories ---
-      addCategory: (newCat) => {
-        const id = `cat_${Date.now()}`;
+      addCategory: async (newCat) => {
+        const user = get().user;
+        const id = newCat.id || `cat_${Date.now()}`;
         const catObj = {
           id,
           label: newCat.label,
+          type: newCat.type || 'expense',
           iconName: newCat.iconName || 'Tag',
           color: newCat.color || '#4F46E5',
           colorBg: newCat.colorBg || '#EEF2FF',
           colorBorder: newCat.colorBorder || '#C7D2FE',
         };
+
         set((state) => {
-          if (newCat.type === 'income') {
-            return { incomeCategories: [...state.incomeCategories, catObj] };
+          const nextExpense = newCat.type === 'income' ? state.expenseCategories : [...state.expenseCategories, catObj];
+          const nextIncome = newCat.type === 'income' ? [...state.incomeCategories, catObj] : state.incomeCategories;
+          
+          const allCustom = [
+            ...nextExpense.filter((c) => c.id.startsWith('cat_')),
+            ...nextIncome.filter((c) => c.id.startsWith('cat_')),
+          ];
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('flowwallet_custom_categories', JSON.stringify(allCustom));
+            }
+          } catch {
+            // ignore
           }
-          return { expenseCategories: [...state.expenseCategories, catObj] };
+
+          return {
+            expenseCategories: nextExpense,
+            incomeCategories: nextIncome,
+          };
         });
+
         get().showToast(`Kategori "${catObj.label}" berhasil dibuat! ✨`);
+
+        // Sync to Supabase table and Auth user_metadata
+        if (user && isValidUUID(user.id)) {
+          try {
+            await db.insertCategory(catObj, user.id);
+            const allCustom = [
+              ...get().expenseCategories.filter((c) => c.id.startsWith('cat_')),
+              ...get().incomeCategories.filter((c) => c.id.startsWith('cat_')),
+            ];
+            await supabase.auth.updateUser({
+              data: { custom_categories: allCustom },
+            });
+          } catch (error) {
+            console.error('Failed to sync custom category to Supabase:', error);
+          }
+        }
         return catObj;
       },
 
-      deleteCategory: (catId) => {
-        set((state) => ({
-          expenseCategories: state.expenseCategories.filter((c) => c.id !== catId),
-          incomeCategories: state.incomeCategories.filter((c) => c.id !== catId),
-        }));
+      deleteCategory: async (catId) => {
+        const user = get().user;
+        set((state) => {
+          const nextExpense = state.expenseCategories.filter((c) => c.id !== catId);
+          const nextIncome = state.incomeCategories.filter((c) => c.id !== catId);
+          const allCustom = [
+            ...nextExpense.filter((c) => c.id.startsWith('cat_')),
+            ...nextIncome.filter((c) => c.id.startsWith('cat_')),
+          ];
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('flowwallet_custom_categories', JSON.stringify(allCustom));
+            }
+          } catch {
+            // ignore
+          }
+
+          return {
+            expenseCategories: nextExpense,
+            incomeCategories: nextIncome,
+          };
+        });
+
+        if (user && isValidUUID(user.id)) {
+          try {
+            await db.deleteCategoryById(catId, user.id);
+            const allCustom = [
+              ...get().expenseCategories.filter((c) => c.id.startsWith('cat_')),
+              ...get().incomeCategories.filter((c) => c.id.startsWith('cat_')),
+            ];
+            await supabase.auth.updateUser({
+              data: { custom_categories: allCustom },
+            });
+          } catch (error) {
+            console.error('Failed to delete category from Supabase:', error);
+          }
+        }
       },
 
       // --- UI ---

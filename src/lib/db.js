@@ -175,6 +175,53 @@ export const deleteInvestmentById = async (invId, userId) => {
   if (error) throw error;
 };
 
+// ── Custom Categories ────────────────────────────────
+export const fetchCategories = async (userId) => {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: true });
+  if (error) {
+    console.warn('fetchCategories warning (table may not exist yet, using metadata/localStorage):', error.message);
+    return [];
+  }
+  return data || [];
+};
+
+export const insertCategory = async (cat, userId) => {
+  const { data, error } = await supabase
+    .from('categories')
+    .upsert([{
+      id: cat.id,
+      user_id: userId,
+      type: cat.type || 'expense',
+      label: cat.label,
+      icon: cat.iconName || 'Tag',
+      color: cat.color || '#4F46E5',
+      color_bg: cat.colorBg || '#EEF2FF',
+      color_border: cat.colorBorder || '#C7D2FE',
+    }], { onConflict: 'id' })
+    .select()
+    .single();
+  if (error) {
+    console.warn('insertCategory warning:', error.message);
+    return null;
+  }
+  return data;
+};
+
+export const deleteCategoryById = async (catId, userId) => {
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', catId)
+    .eq('user_id', userId);
+  if (error) {
+    console.warn('deleteCategoryById warning:', error.message);
+  }
+};
+
 // ── Auth ──────────────────────────────────────────────
 export const signUp = async (email, password) => {
   const { data, error } = await supabase.auth.signUp({ email, password });
