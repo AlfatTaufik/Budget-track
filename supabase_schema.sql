@@ -11,7 +11,7 @@
 CREATE TABLE IF NOT EXISTS transactions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  type TEXT CHECK (type IN ('income', 'expense')) NOT NULL,
+  type TEXT CHECK (type IN ('income', 'expense', 'transfer')) NOT NULL,
   amount NUMERIC(15, 2) NOT NULL CHECK (amount > 0),
   category TEXT NOT NULL,
   wallet TEXT NOT NULL,
@@ -102,10 +102,12 @@ CREATE POLICY "Users can delete own categories" ON categories FOR DELETE USING (
 -- RLS Policies untuk transactions
 DROP POLICY IF EXISTS "Users can view own transactions" ON transactions;
 DROP POLICY IF EXISTS "Users can insert own transactions" ON transactions;
+DROP POLICY IF EXISTS "Users can update own transactions" ON transactions;
 DROP POLICY IF EXISTS "Users can delete own transactions" ON transactions;
 
 CREATE POLICY "Users can view own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own transactions" ON transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own transactions" ON transactions FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies untuk budgets

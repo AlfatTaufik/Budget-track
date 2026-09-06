@@ -1215,6 +1215,12 @@ const useStore = create(
         tags: state.tags,
         expenseCategories: state.expenseCategories,
         incomeCategories: state.incomeCategories,
+        transactions: state.transactions,
+        budgets: state.budgets,
+        goals: state.goals,
+        investments: state.investments,
+        walletBalances: state.walletBalances,
+        hiddenExpenseCategories: state.hiddenExpenseCategories,
       }),
     }
   )
