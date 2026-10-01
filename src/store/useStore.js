@@ -72,6 +72,18 @@ const useStore = create(
       balanceVisible: true,
       dataLoaded: false,
       hiddenExpenseCategories: [], // Category IDs hidden from expense calculations/views (e.g. 'bills')
+      selectedAnalyticsMonth: { year: new Date().getFullYear(), month: new Date().getMonth() },
+
+      // --- Selected Analytics Month Handlers ---
+      setSelectedAnalyticsMonth: (monthObj) => {
+        if (!monthObj) return;
+        set({
+          selectedAnalyticsMonth: {
+            year: Number(monthObj.year),
+            month: Number(monthObj.month),
+          },
+        });
+      },
 
       // --- Hidden Categories Handlers ---
       toggleHideExpenseCategory: (catId) => {
@@ -1116,10 +1128,12 @@ const useStore = create(
       },
 
       getLast6MonthsData: () => {
-        const txs = get().transactions;
+        const txs = get().transactions || [];
         const usdRate = get().usdRate || 16250;
         const result = [];
         const now = new Date();
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+        const fullMonthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
         for (let i = 5; i >= 0; i--) {
           const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const month = d.getMonth();
@@ -1140,10 +1154,139 @@ const useStore = create(
               const idr = t.wallet === 'paypal' || t.currency === 'USD' ? t.amount * (t.exchangeRate || usdRate) : t.amount;
               return s + idr;
             }, 0);
-          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
-          result.push({ name: months[month], income, expense });
+          result.push({
+            name: months[month],
+            fullName: `${fullMonthNames[month]} ${year}`,
+            shortMonth: months[month],
+            month,
+            year,
+            income,
+            expense,
+            net: income - expense,
+            count: monthTxs.length,
+          });
         }
         return result;
+      },
+
+      getAvailableMonths: () => {
+        const txs = get().transactions || [];
+        const fullMonthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const now = new Date();
+        const map = new Map();
+
+        // Always provide at least the last 6 months
+        for (let i = 0; i < 6; i++) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const y = d.getFullYear();
+          const m = d.getMonth();
+          const key = `${y}-${String(m).padStart(2, '0')}`;
+          map.set(key, { year: y, month: m, label: `${fullMonthNames[m]} ${y}`, key });
+        }
+
+        // Add any other month present in transactions
+        txs.forEach((tx) => {
+          if (!tx.date) return;
+          const d = new Date(tx.date);
+          if (isNaN(d.getTime())) return;
+          const y = d.getFullYear();
+          const m = d.getMonth();
+          const key = `${y}-${String(m).padStart(2, '0')}`;
+          if (!map.has(key)) {
+            map.set(key, { year: y, month: m, label: `${fullMonthNames[m]} ${y}`, key });
+          }
+        });
+
+        // Sort descending (latest month first)
+        return Array.from(map.values()).sort((a, b) => {
+          if (a.year !== b.year) return b.year - a.year;
+          return b.month - a.month;
+        });
+      },
+
+      getMonthlySummary: (targetDate = new Date()) => {
+        const txs = get().transactions || [];
+        const usdRate = get().usdRate || 16250;
+        const d = targetDate instanceof Date ? targetDate : new Date(targetDate);
+        const year = d.getFullYear();
+        const month = d.getMonth();
+
+        // Current targeted month
+        const currentMonthTxs = txs.filter((tx) => {
+          const td = new Date(tx.date);
+          return td.getMonth() === month && td.getFullYear() === year;
+        });
+
+        const income = currentMonthTxs
+          .filter((t) => t.type === 'income')
+          .reduce((s, t) => s + (t.wallet === 'paypal' || t.currency === 'USD' ? t.amount * (t.exchangeRate || usdRate) : t.amount), 0);
+
+        const expense = currentMonthTxs
+          .filter((t) => t.type === 'expense')
+          .reduce((s, t) => s + (t.wallet === 'paypal' || t.currency === 'USD' ? t.amount * (t.exchangeRate || usdRate) : t.amount), 0);
+
+        // Previous month
+        const prevDate = new Date(year, month - 1, 1);
+        const prevYear = prevDate.getFullYear();
+        const prevMonth = prevDate.getMonth();
+
+        const prevMonthExpenses = txs
+          .filter((tx) => {
+            const td = new Date(tx.date);
+            return tx.type === 'expense' && td.getMonth() === prevMonth && td.getFullYear() === prevYear;
+          })
+          .reduce((s, t) => s + (t.wallet === 'paypal' || t.currency === 'USD' ? t.amount * (t.exchangeRate || usdRate) : t.amount), 0);
+
+        const diffExpense = expense - prevMonthExpenses;
+        let diffPercent = 0;
+        if (prevMonthExpenses > 0) {
+          diffPercent = ((expense - prevMonthExpenses) / prevMonthExpenses) * 100;
+        } else if (expense > 0) {
+          diffPercent = 100;
+        }
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const now = new Date();
+        const isCurrentMonthNow = now.getFullYear() === year && now.getMonth() === month;
+        const daysCount = isCurrentMonthNow ? Math.max(1, now.getDate()) : daysInMonth;
+        const avgDailyExpense = Math.round(expense / daysCount);
+
+        return {
+          year,
+          month,
+          income,
+          expense,
+          net: income - expense,
+          prevMonthExpenses,
+          diffExpense,
+          diffPercent,
+          isHigherThanPrev: diffExpense > 0,
+          avgDailyExpense,
+          txCount: currentMonthTxs.length,
+          expenseTxCount: currentMonthTxs.filter((t) => t.type === 'expense').length,
+        };
+      },
+
+      getMonthlyTransactions: (targetDate = new Date(), type = 'all', category = null) => {
+        const txs = get().transactions || [];
+        const usdRate = get().usdRate || 16250;
+        const d = targetDate instanceof Date ? targetDate : new Date(targetDate);
+        const year = d.getFullYear();
+        const month = d.getMonth();
+
+        return txs
+          .filter((tx) => {
+            const td = new Date(tx.date);
+            if (td.getMonth() !== month || td.getFullYear() !== year) return false;
+            if (type !== 'all' && tx.type !== type) return false;
+            if (category && tx.category !== category) return false;
+            return true;
+          })
+          .map((tx) => ({
+            ...tx,
+            idrAmount: tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount,
+          }))
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       },
 
       getCategoryExpenses: (date = new Date(), excludedCategories = null) => {

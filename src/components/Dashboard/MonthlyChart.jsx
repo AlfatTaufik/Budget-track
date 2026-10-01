@@ -1,8 +1,10 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { ChevronRight, Sparkles, PieChart as PieChartIcon } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { formatIDR, formatCompact } from '../../utils/formatters';
+import MonthlyExpenseDetailModal from '../Modal/MonthlyExpenseDetailModal';
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -28,60 +30,200 @@ const CustomTooltip = ({ active, payload, label }) => {
             </span>
           </div>
         ))}
+        <div style={{ fontSize: '0.625rem', color: '#6366F1', marginTop: 4, fontWeight: 600 }}>
+          Ketuk bar untuk lihat rincian ➔
+        </div>
       </div>
     );
   }
   return null;
 };
 
-const MonthlyChart = () => {
+const MonthlyChart = ({ onNavigate }) => {
   const getLast6MonthsData = useStore((s) => s.getLast6MonthsData);
+  const setSelectedAnalyticsMonth = useStore((s) => s.setSelectedAnalyticsMonth);
   const data = getLast6MonthsData();
 
+  const [selectedMonthModal, setSelectedMonthModal] = useState(null);
+
+  const handleBarClick = (entry) => {
+    if (!entry) return;
+    // Entry can come from BarChart click or custom chip
+    const monthObj = data.find((d) => d.name === entry.name || d.month === entry.month) || entry;
+    setSelectedMonthModal(monthObj);
+  };
+
+  const handleOpenAnalyticsForMonth = (monthObj) => {
+    if (monthObj) {
+      setSelectedAnalyticsMonth({ year: monthObj.year, month: monthObj.month });
+    }
+    if (onNavigate) {
+      onNavigate('analytics');
+    }
+  };
+
   return (
-    <motion.div
-      className="glass-card"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.3 }}
-      style={{ padding: '16px 14px 10px', marginBottom: 16 }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h3 style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
-          Arus Kas 6 Bulan
-        </h3>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#065F46', fontWeight: 600, backgroundColor: '#ECFDF5', padding: '2px 6px', borderRadius: 4 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#059669' }} /> Masuk
+    <>
+      <motion.div
+        className="glass-card"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.3 }}
+        style={{ padding: '16px 14px 12px', marginBottom: 16 }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <div>
+            <h3 style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', color: 'var(--text-primary)', margin: 0 }}>
+              Arus Kas 6 Bulan
+            </h3>
+            <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+              Klik grafik atau bulan untuk detail pengeluaran
+            </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#9F1239', fontWeight: 600, backgroundColor: '#FFF1F2', padding: '2px 6px', borderRadius: 4 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#E11D48' }} /> Keluar
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#065F46', fontWeight: 600, backgroundColor: '#ECFDF5', padding: '2px 6px', borderRadius: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#059669' }} /> Masuk
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#9F1239', fontWeight: 600, backgroundColor: '#FFF1F2', padding: '2px 6px', borderRadius: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#E11D48' }} /> Keluar
+            </div>
           </div>
         </div>
-      </div>
-      <ResponsiveContainer width="100%" height={165}>
-        <BarChart data={data} barCategoryGap="30%" barGap={3}>
-          <CartesianGrid vertical={false} stroke="#E4E4E7" strokeDasharray="3 3" />
-          <XAxis
-            dataKey="name"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: '#71717A', fontSize: 11, fontFamily: 'var(--font-body)' }}
+
+        <div style={{ cursor: 'pointer' }}>
+          <ResponsiveContainer width="100%" height={165}>
+            <BarChart
+              data={data}
+              barCategoryGap="30%"
+              barGap={3}
+              onClick={(state) => {
+                if (state && state.activePayload && state.activePayload.length) {
+                  const clickedData = state.activePayload[0].payload;
+                  handleBarClick(clickedData);
+                }
+              }}
+            >
+              <CartesianGrid vertical={false} stroke="#E4E4E7" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#71717A', fontSize: 11, fontFamily: 'var(--font-body)' }}
+              />
+              <YAxis
+                tickFormatter={(v) => (v > 0 ? formatIDR(v) : '0')}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#71717A', fontSize: 9, fontFamily: 'var(--font-body)' }}
+                width={68}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(24, 24, 27, 0.04)', radius: 4 }} />
+              {/* StudyTracker Emerald & Rose solid bars with click support */}
+              <Bar
+                dataKey="income"
+                fill="#059669"
+                radius={[3, 3, 0, 0]}
+                maxBarSize={15}
+                onClick={(entry) => handleBarClick(entry)}
+              />
+              <Bar
+                dataKey="expense"
+                fill="#E11D48"
+                radius={[3, 3, 0, 0]}
+                maxBarSize={15}
+                onClick={(entry) => handleBarClick(entry)}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Quick Month Selector Buttons */}
+        <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: 10, marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Pilih Rincian Bulan:
+            </span>
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('analytics')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2,
+                  cursor: 'pointer',
+                }}
+              >
+                <span>Buka Analitik</span>
+                <ChevronRight size={12} />
+              </button>
+            )}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: 6,
+              overflowX: 'auto',
+              scrollbarWidth: 'none',
+              paddingBottom: 2,
+            }}
+          >
+            {data.map((item, idx) => {
+              const isCurrent = idx === data.length - 1;
+              return (
+                <button
+                  key={`${item.year}-${item.month}`}
+                  type="button"
+                  onClick={() => setSelectedMonthModal(item)}
+                  style={{
+                    flexShrink: 0,
+                    padding: '4px 9px',
+                    borderRadius: 'var(--radius-full)',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: isCurrent ? '#18181B' : '#FFFFFF',
+                    color: isCurrent ? '#FFFFFF' : 'var(--text-secondary)',
+                    fontSize: '0.6875rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    transition: 'all 0.15s ease',
+                  }}
+                  title={`Klik untuk melihat detail pengeluaran ${item.fullName || item.name}`}
+                >
+                  <PieChartIcon size={10} color={isCurrent ? '#FFFFFF' : 'var(--text-muted)'} />
+                  <span>{item.name}</span>
+                  {item.expense > 0 && (
+                    <span style={{ fontSize: '0.625rem', opacity: isCurrent ? 0.9 : 0.7 }}>
+                      • {formatCompact(item.expense)}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Detail Modal for Selected Month */}
+      <AnimatePresence>
+        {selectedMonthModal && (
+          <MonthlyExpenseDetailModal
+            monthData={selectedMonthModal}
+            onClose={() => setSelectedMonthModal(null)}
+            onOpenInAnalytics={() => handleOpenAnalyticsForMonth(selectedMonthModal)}
           />
-          <YAxis
-            tickFormatter={(v) => (v > 0 ? formatIDR(v) : '0')}
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: '#71717A', fontSize: 9, fontFamily: 'var(--font-body)' }}
-            width={68}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(24, 24, 27, 0.04)', radius: 4 }} />
-          {/* StudyTracker Emerald & Rose solid bars */}
-          <Bar dataKey="income" fill="#059669" radius={[3, 3, 0, 0]} maxBarSize={15} />
-          <Bar dataKey="expense" fill="#E11D48" radius={[3, 3, 0, 0]} maxBarSize={15} />
-        </BarChart>
-      </ResponsiveContainer>
-    </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
