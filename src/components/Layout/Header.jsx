@@ -24,37 +24,27 @@ const Header = ({ activePage }) => {
     <>
       <header className="app-header">
         {activePage === 'dashboard' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#18181B',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: 'var(--shadow-xs)',
-              }}
-            >
-              <Wallet size={15} color="#FFFFFF" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+            <div className="brand-mark header-brand">
+              <Wallet size={17} strokeWidth={2.5} />
             </div>
-            <div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.2 }}>
                 Selamat datang,
               </div>
-              <span className="logo" style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.9375rem' }}>
+              <div
+                className="logo"
+                style={{ fontSize: '1rem', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+              >
                 {firstName}
-              </span>
+              </div>
             </div>
           </div>
         ) : (
-          <h2 style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
-            {PAGE_TITLES[activePage]}
-          </h2>
+          <h2 style={{ fontSize: '1.25rem' }}>{PAGE_TITLES[activePage]}</h2>
         )}
 
-        {/* User Avatar + Menu (StudyTracker Zinc Style) */}
+        {/* User Avatar + Menu */}
         <div style={{ position: 'relative' }}>
           <button
             onClick={() => setShowMenu(!showMenu)}
@@ -62,25 +52,27 @@ const Header = ({ activePage }) => {
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              backgroundColor: 'var(--bg-card-subtle)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-full)',
+              backgroundColor: '#FFFFFF',
+              border: '2px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              boxShadow: 'var(--shadow-xs)',
               padding: '3px 8px 3px 3px',
               cursor: 'pointer',
-              transition: 'all 0.15s',
+              flexShrink: 0,
             }}
             aria-label="Menu pengguna"
           >
             <div
               style={{
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                backgroundColor: '#18181B',
+                width: 26,
+                height: 26,
+                backgroundColor: 'var(--block-pink)',
+                border: '2px solid var(--ink)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#FFFFFF',
+                color: 'var(--ink)',
+                fontFamily: 'var(--font-display)',
                 fontSize: '0.625rem',
                 fontWeight: 700,
               }}
@@ -113,7 +105,7 @@ const Header = ({ activePage }) => {
                     right: 0,
                     top: 'calc(100% + 6px)',
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-md)',
                     padding: '6px',
                     minWidth: 180,
@@ -161,7 +153,7 @@ const Header = ({ activePage }) => {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: 'var(--color-expense, #E11D48)',
+                      color: 'var(--color-expense)',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       transition: 'background 0.15s',
@@ -169,7 +161,7 @@ const Header = ({ activePage }) => {
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-card-subtle)')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
-                    <Trash2 size={13} color="var(--color-expense, #E11D48)" />
+                    <Trash2 size={13} color="var(--color-expense)" />
                     Reset Data Permanen
                   </button>
 
@@ -190,12 +182,12 @@ const Header = ({ activePage }) => {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#E11D48',
+                      color: '#C1123A',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       transition: 'background 0.15s',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FFF1F2')}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FFD0D6')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <LogOut size={13} />

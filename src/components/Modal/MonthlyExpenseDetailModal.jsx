@@ -36,7 +36,7 @@ const CustomTooltip = ({ active, payload }) => {
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          border: '1px solid var(--border-subtle)',
+          border: '2px solid var(--border-subtle)',
           borderRadius: 'var(--radius-md)',
           padding: '8px 12px',
           boxShadow: 'var(--shadow-lg)',
@@ -152,7 +152,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
             type="button"
             onClick={onClose}
             style={{
-              background: '#F4F4F5',
+              background: '#F3EAD3',
               border: 'none',
               borderRadius: '50%',
               width: 32,
@@ -176,7 +176,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
               padding: '14px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--bg-card-subtle)',
-              border: '1px solid var(--border-subtle)',
+              border: '2px solid var(--border-subtle)',
               marginBottom: 16,
             }}
           >
@@ -201,9 +201,9 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                     borderRadius: 'var(--radius-full)',
                     fontSize: '0.6875rem',
                     fontWeight: 700,
-                    backgroundColor: summary.isHigherThanPrev ? '#FFF1F2' : '#ECFDF5',
-                    color: summary.isHigherThanPrev ? '#E11D48' : '#059669',
-                    border: `1px solid ${summary.isHigherThanPrev ? '#FECDD3' : '#A7F3D0'}`,
+                    backgroundColor: summary.isHigherThanPrev ? '#FFD0D6' : '#C4F2DA',
+                    color: summary.isHigherThanPrev ? '#C1123A' : '#046C4E',
+                    border: `2px solid ${summary.isHigherThanPrev ? '#111111' : '#111111'}`,
                   }}
                   title={`Bulan sebelumnya: ${formatIDR(summary.prevMonthExpenses)}`}
                 >
@@ -225,7 +225,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
               </div>
               <div>
                 <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Arus Kas Bersih</span>
-                <div className="amount" style={{ fontSize: '0.875rem', fontWeight: 600, color: summary.net >= 0 ? '#059669' : '#E11D48' }}>
+                <div className="amount" style={{ fontSize: '0.875rem', fontWeight: 600, color: summary.net >= 0 ? '#046C4E' : '#C1123A' }}>
                   {summary.net >= 0 ? `+${formatIDR(summary.net)}` : formatIDR(summary.net)}
                 </div>
               </div>
@@ -275,7 +275,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                                 height: 22,
                                 borderRadius: 'var(--radius-sm)',
                                 backgroundColor: d.colorBg,
-                                border: `1px solid ${d.colorBorder || '#E4E4E7'}`,
+                                border: `2px solid ${d.colorBorder || '#111111'}`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -297,7 +297,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                           </div>
                         </div>
                         {/* Thin progress indicator */}
-                        <div style={{ height: 4, borderRadius: 2, backgroundColor: '#F4F4F5', overflow: 'hidden' }}>
+                        <div style={{ height: 4, borderRadius: 2, backgroundColor: '#F3EAD3', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${percent}%`, backgroundColor: d.fill, borderRadius: 2 }} />
                         </div>
                       </div>
@@ -310,7 +310,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                 style={{
                   textAlign: 'center',
                   padding: '24px 12px',
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: '#F3EAD3',
                   borderRadius: 'var(--radius-md)',
                   color: 'var(--text-muted)',
                   fontSize: '0.8125rem',
@@ -343,7 +343,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                         justifyContent: 'space-between',
                         padding: '8px 10px',
                         backgroundColor: '#FFFFFF',
-                        border: '1px solid var(--border-subtle)',
+                        border: '2px solid var(--border-subtle)',
                         borderRadius: 'var(--radius-sm)',
                       }}
                     >
@@ -354,7 +354,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                             height: 26,
                             borderRadius: 'var(--radius-sm)',
                             backgroundColor: cat.colorBg,
-                            border: `1px solid ${cat.colorBorder || '#E4E4E7'}`,
+                            border: `2px solid ${cat.colorBorder || '#111111'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -395,7 +395,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
               justifyContent: 'center',
               gap: 8,
               padding: '11px 16px',
-              backgroundColor: '#18181B',
+              backgroundColor: '#111111',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: 'var(--radius-md)',

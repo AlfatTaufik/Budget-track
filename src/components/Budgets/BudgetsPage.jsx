@@ -14,7 +14,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
   const isOver = bp.isOver;
   const isWarning = bp.isWarning;
 
-  const barColor = isOver ? '#E11D48' : isWarning ? '#D97706' : '#059669';
+  const barColor = isOver ? '#C1123A' : isWarning ? '#A85800' : '#046C4E';
   const statusBadge = isOver ? (
     <span
       style={{
@@ -23,9 +23,9 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
         gap: 3,
         padding: '2px 8px',
         borderRadius: 'var(--radius-full)',
-        backgroundColor: '#FFF1F2',
-        border: '1px solid #FECDD3',
-        color: '#E11D48',
+        backgroundColor: '#FFD0D6',
+        border: '2px solid #111111',
+        color: '#C1123A',
         fontSize: '0.625rem',
         fontWeight: 700,
       }}
@@ -40,9 +40,9 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
         gap: 3,
         padding: '2px 8px',
         borderRadius: 'var(--radius-full)',
-        backgroundColor: '#FFFBEB',
-        border: '1px solid #FDE68A',
-        color: '#D97706',
+        backgroundColor: '#FFE89A',
+        border: '2px solid #111111',
+        color: '#A85800',
         fontSize: '0.625rem',
         fontWeight: 700,
       }}
@@ -57,9 +57,9 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
         gap: 3,
         padding: '2px 8px',
         borderRadius: 'var(--radius-full)',
-        backgroundColor: '#ECFDF5',
-        border: '1px solid #A7F3D0',
-        color: '#059669',
+        backgroundColor: '#C4F2DA',
+        border: '2px solid #111111',
+        color: '#046C4E',
         fontSize: '0.625rem',
         fontWeight: 700,
       }}
@@ -75,7 +75,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
       style={{
         padding: '12px 14px',
         backgroundColor: '#FFFFFF',
-        border: `1px solid ${isOver ? '#FECDD3' : 'var(--border-subtle)'}`,
+        border: `2px solid ${isOver ? '#111111' : 'var(--border-subtle)'}`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -85,8 +85,8 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
             width: 36,
             height: 36,
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: cat.colorBg || '#F4F4F5',
-            border: `1px solid ${cat.colorBorder || 'var(--border-subtle)'}`,
+            backgroundColor: cat.colorBg || '#F3EAD3',
+            border: `2px solid ${cat.colorBorder || 'var(--border-subtle)'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -169,7 +169,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
               <button
                 onClick={() => onSave(bp.category)}
                 style={{
-                  backgroundColor: '#18181B',
+                  backgroundColor: '#111111',
                   border: 'none',
                   borderRadius: 'var(--radius-sm)',
                   padding: '6px 10px',
@@ -188,7 +188,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
                 onClick={onCancel}
                 style={{
                   backgroundColor: 'var(--bg-card-subtle)',
-                  border: '1px solid var(--border-subtle)',
+                  border: '2px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '6px 8px',
                   color: 'var(--text-secondary)',
@@ -234,7 +234,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
 const GoalCard = ({ goal, onAdd, onDelete }) => {
   const pct = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
   const remaining = goal.targetAmount - goal.savedAmount;
-  const barColor = pct >= 100 ? '#059669' : goal.color;
+  const barColor = pct >= 100 ? '#046C4E' : goal.color;
 
   return (
     <motion.div
@@ -243,7 +243,7 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
       style={{
         padding: '14px 16px',
         backgroundColor: '#FFFFFF',
-        border: '1px solid var(--border-subtle)',
+        border: '2px solid var(--border-subtle)',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -253,8 +253,8 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
               width: 34,
               height: 34,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: goal.colorBg || '#F4F4F5',
-              border: `1px solid ${goal.colorBorder || 'var(--border-subtle)'}`,
+              backgroundColor: goal.colorBg || '#F3EAD3',
+              border: `2px solid ${goal.colorBorder || 'var(--border-subtle)'}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -281,7 +281,7 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
                 height: 28,
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--bg-card-subtle)',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 color: 'var(--text-primary)',
                 cursor: 'pointer',
                 display: 'flex',
@@ -298,14 +298,14 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
                 width: 28,
                 height: 28,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#ECFDF5',
-                border: '1px solid #A7F3D0',
+                backgroundColor: '#C4F2DA',
+                border: '2px solid #111111',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Check size={14} color="#059669" />
+              <Check size={14} color="#046C4E" />
             </div>
           )}
           <button
@@ -314,9 +314,9 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
               width: 28,
               height: 28,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: '#FFF1F2',
-              border: '1px solid #FECDD3',
-              color: '#E11D48',
+              backgroundColor: '#FFD0D6',
+              border: '2px solid #111111',
+              color: '#C1123A',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -336,7 +336,7 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
         </div>
         <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
           {pct >= 100 ? (
-            <span style={{ color: '#059669', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ color: '#046C4E', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
               <Sparkles size={11} /> Tercapai!
             </span>
           ) : (
@@ -467,7 +467,7 @@ const BudgetsPage = () => {
             flex: 1,
             padding: '8px 0',
             borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'envelopes' ? '1px solid var(--border-medium)' : '1px solid transparent',
+            border: activeTab === 'envelopes' ? '1px solid var(--border-medium)' : '2px solid transparent',
             cursor: 'pointer',
             backgroundColor: activeTab === 'envelopes' ? '#FFFFFF' : 'transparent',
             color: activeTab === 'envelopes' ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -489,7 +489,7 @@ const BudgetsPage = () => {
             flex: 1,
             padding: '8px 0',
             borderRadius: 'var(--radius-sm)',
-            border: activeTab === 'goals' ? '1px solid var(--border-medium)' : '1px solid transparent',
+            border: activeTab === 'goals' ? '1px solid var(--border-medium)' : '2px solid transparent',
             cursor: 'pointer',
             backgroundColor: activeTab === 'goals' ? '#FFFFFF' : 'transparent',
             color: activeTab === 'goals' ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -515,7 +515,7 @@ const BudgetsPage = () => {
               borderRadius: 'var(--radius-lg)',
               padding: '16px 18px',
               backgroundColor: 'var(--bg-card-subtle)',
-              border: '1px solid var(--border-subtle)',
+              border: '2px solid var(--border-subtle)',
               marginBottom: 16,
             }}
           >
@@ -528,7 +528,7 @@ const BudgetsPage = () => {
                   className="amount"
                   style={{
                     fontSize: '1.625rem',
-                    color: totalRemaining >= 0 ? 'var(--text-primary)' : '#E11D48',
+                    color: totalRemaining >= 0 ? 'var(--text-primary)' : '#C1123A',
                     letterSpacing: '-0.03em',
                     marginTop: 2,
                   }}
@@ -554,22 +554,22 @@ const BudgetsPage = () => {
                 initial={{ width: 0 }}
                 animate={{ width: `${overallPercentage}%` }}
                 transition={{ duration: 0.8 }}
-                style={{ backgroundColor: totalRemaining < 0 ? '#E11D48' : overallPercentage > 80 ? '#D97706' : '#18181B' }}
+                style={{ backgroundColor: totalRemaining < 0 ? '#C1123A' : overallPercentage > 80 ? '#A85800' : '#111111' }}
               />
             </div>
 
             {/* Status Breakdown Chips */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-              <span style={{ fontSize: '0.6875rem', color: '#065F46', backgroundColor: '#ECFDF5', border: '1px solid #A7F3D0', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.6875rem', color: '#065F46', backgroundColor: '#C4F2DA', border: '2px solid #111111', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
                 🟢 {safeCount} Aman
               </span>
               {warningCount > 0 && (
-                <span style={{ fontSize: '0.6875rem', color: '#92400E', backgroundColor: '#FFFBEB', border: '1px solid #FDE68A', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.6875rem', color: '#92400E', backgroundColor: '#FFE89A', border: '2px solid #111111', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
                   🟡 {warningCount} Waspada
                 </span>
               )}
               {overCount > 0 && (
-                <span style={{ fontSize: '0.6875rem', color: '#9F1239', backgroundColor: '#FFF1F2', border: '1px solid #FECDD3', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                <span style={{ fontSize: '0.6875rem', color: '#9F1239', backgroundColor: '#FFD0D6', border: '2px solid #111111', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
                   🔴 {overCount} Overbudget
                 </span>
               )}
@@ -584,7 +584,7 @@ const BudgetsPage = () => {
                   width: 24,
                   height: 24,
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#18181B',
+                  backgroundColor: '#111111',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -603,7 +603,7 @@ const BudgetsPage = () => {
                 style={{
                   padding: '4px 10px',
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid var(--border-subtle)',
+                  border: '2px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-sm)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
@@ -705,7 +705,7 @@ const BudgetsPage = () => {
                   width: 24,
                   height: 24,
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#18181B',
+                  backgroundColor: '#111111',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -722,7 +722,7 @@ const BudgetsPage = () => {
               style={{
                 padding: '4px 10px',
                 backgroundColor: '#FFFFFF',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '0.75rem',
                 fontWeight: 600,

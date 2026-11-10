@@ -133,6 +133,15 @@ export const upsertWalletBalance = async (walletId, balance, userId) => {
   if (error) throw error;
 };
 
+export const deleteLegacyWalletBalances = async (keepWalletId, userId) => {
+  const { error } = await supabase
+    .from('wallet_balances')
+    .delete()
+    .eq('user_id', userId)
+    .neq('wallet_id', keepWalletId);
+  if (error) throw error;
+};
+
 // ── Investments ───────────────────────────────────────
 export const fetchInvestments = async (userId) => {
   const { data, error } = await supabase

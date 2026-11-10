@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, TrendingUp, ArrowRight, Check } from 'lucide-react';
+import { X, TrendingUp } from 'lucide-react';
 import useStore from '../../store/useStore';
-import { WALLETS } from '../../utils/categories';
-import { formatIDR, formatWalletAmount } from '../../utils/formatters';
+import { WALLETS, MAIN_WALLET_ID } from '../../utils/categories';
+import { formatIDR } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 
 const TopUpInvestmentModal = ({ inv, onClose }) => {
   const topUpInvestment = useStore((s) => s.topUpInvestment);
-  const walletBalances = useStore((s) => s.walletBalances) || {};
+  const walletBalance = useStore((s) => s.walletBalance) || 0;
   const [amount, setAmount] = useState('');
-  const [sourceWallet, setSourceWallet] = useState('bca'); // 'none' | walletId
+  const [sourceWallet, setSourceWallet] = useState(MAIN_WALLET_ID); // 'none' | MAIN_WALLET_ID
 
   if (!inv) return null;
 
@@ -22,7 +22,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
     e.preventDefault();
     if (parsedAmount <= 0) return;
 
-    topUpInvestment(inv.id, parsedAmount, sourceWallet);
+    topUpInvestment(inv.id, parsedAmount, sourceWallet !== 'none');
     onClose();
   };
 
@@ -64,15 +64,15 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                 width: 30,
                 height: 30,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: inv.colorBg || '#FFFBEB',
-                color: inv.color || '#D97706',
+                backgroundColor: inv.colorBg || '#FFE89A',
+                color: inv.color || '#A85800',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: `1px solid ${inv.colorBorder || 'var(--border-subtle)'}`,
+                border: `2px solid ${inv.colorBorder || 'var(--border-subtle)'}`,
               }}
             >
-              <AppIcon name={inv.iconName || 'TrendingUp'} size={15} color={inv.color || '#D97706'} />
+              <AppIcon name={inv.iconName || 'TrendingUp'} size={15} color={inv.color || '#A85800'} />
             </div>
             <div>
               <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -109,7 +109,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                   padding: '6px 0',
                   borderRadius: 'var(--radius-sm)',
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid var(--border-subtle)',
+                  border: '2px solid var(--border-subtle)',
                   fontSize: '0.6875rem',
                   fontWeight: 600,
                   color: 'var(--text-secondary)',
@@ -145,7 +145,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                 padding: '10px 14px',
                 backgroundColor: 'var(--bg-card-subtle)',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 marginBottom: 14,
                 display: 'flex',
                 alignItems: 'center',
@@ -153,16 +153,16 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
               }}
             >
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total Portofolio Nanti:</span>
-              <strong style={{ fontSize: '0.9375rem', color: '#059669' }}>
+              <strong style={{ fontSize: '0.9375rem', color: '#046C4E' }}>
                 {formatIDR(newTotal)}
               </strong>
             </div>
           )}
 
-          {/* Source Wallet (Potong Rekening) */}
+          {/* Funding source: from the wallet, or record-only */}
           <div style={{ marginBottom: 14 }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-              Sumber Dana (Potong Dari Rekening):
+              Sumber Dana:
             </label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button
@@ -171,7 +171,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                 style={{
                   padding: '5px 10px',
                   borderRadius: 'var(--radius-full)',
-                  border: `1.5px solid ${sourceWallet === 'none' ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                  border: `2px solid ${sourceWallet === 'none' ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
                   backgroundColor: sourceWallet === 'none' ? 'var(--bg-card-subtle)' : '#FFFFFF',
                   cursor: 'pointer',
                   fontSize: '0.6875rem',
@@ -179,12 +179,11 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                   color: sourceWallet === 'none' ? 'var(--text-primary)' : 'var(--text-secondary)',
                 }}
               >
-                🚫 Tanpa Potong Rekening (Profit / Capital Gain)
+                🚫 Tanpa Potong Dompet (Profit / Capital Gain)
               </button>
 
               {WALLETS.map((w) => {
                 const isSelected = sourceWallet === w.id;
-                const bal = walletBalances[w.id] || 0;
                 return (
                   <button
                     key={w.id}
@@ -193,7 +192,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                     style={{
                       padding: '5px 10px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
+                      border: `2px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
                       backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
                       cursor: 'pointer',
                       display: 'flex',
@@ -205,7 +204,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                     }}
                   >
                     <AppIcon name={w.iconName} size={11} color={w.color} />
-                    {w.label} {bal > 0 && `(${formatWalletAmount(bal, w.id)})`}
+                    Potong dari {w.label} ({formatIDR(walletBalance)})
                   </button>
                 );
               })}
@@ -217,8 +216,8 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
             <div
               style={{
                 padding: '10px 12px',
-                backgroundColor: '#F0FDF4',
-                border: '1px solid #BBF7D0',
+                backgroundColor: '#C4F2DA',
+                border: '2px solid #111111',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.75rem',
                 color: '#166534',
@@ -233,14 +232,14 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
               style={{
                 padding: '8px 12px',
                 backgroundColor: 'var(--bg-card-subtle)',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.6875rem',
                 color: 'var(--text-muted)',
                 marginBottom: 20,
               }}
             >
-              Nilai portofolio bertambah tanpa memotong saldo rekening mana pun.
+              Nilai portofolio bertambah tanpa memotong saldo dompet.
             </div>
           )}
 
@@ -251,8 +250,8 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#059669',
-              borderColor: '#047857',
+              backgroundColor: '#046C4E',
+              borderColor: '#046C4E',
               fontSize: '0.875rem',
               fontWeight: 600,
               display: 'flex',

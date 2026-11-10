@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Delete, TrendingUp, TrendingDown, ArrowLeftRight, StickyNote, ArrowLeft, RotateCcw, Mail, AlertTriangle, Keyboard, Tag, Plus, ArrowRight } from 'lucide-react';
+import { X, Delete, TrendingUp, TrendingDown, StickyNote, ArrowLeft, RotateCcw, Mail, AlertTriangle, Keyboard, Tag, Plus } from 'lucide-react';
 import useStore from '../../store/useStore';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, WALLETS } from '../../utils/categories';
-import { formatIDR, formatCompact, formatUSD } from '../../utils/formatters';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../utils/categories';
+import { formatIDR, formatCompact } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 
 import AddCategoryModal from './AddCategoryModal';
@@ -18,11 +18,9 @@ const AddTransactionModal = ({ onClose }) => {
   const expenseCategories = useStore((s) => s.expenseCategories || EXPENSE_CATEGORIES);
   const incomeCategories = useStore((s) => s.incomeCategories || INCOME_CATEGORIES);
 
-  const [type, setType] = useState('expense'); // expense | income | transfer
+  const [type, setType] = useState('expense'); // expense | income
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState(expenseCategories[0]?.id || 'food');
-  const [wallet, setWallet] = useState(WALLETS[0].id);
-  const [toWallet, setToWallet] = useState(WALLETS[1]?.id || 'bca');
   const [note, setNote] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
   const [showAddTag, setShowAddTag] = useState(false);
@@ -41,8 +39,6 @@ const AddTransactionModal = ({ onClose }) => {
     setShowAddTag(false);
     setNewTagInput('');
     setCategory(type === 'expense' ? expenseCategories[0]?.id : incomeCategories[0]?.id);
-    setWallet(WALLETS[0].id);
-    setToWallet(WALLETS[1]?.id || 'bca');
     setStep('amount');
     setShowNote(false);
   };
@@ -89,14 +85,12 @@ const AddTransactionModal = ({ onClose }) => {
     addTransaction({
       type,
       amount: parsedAmount,
-      category: type === 'transfer' ? 'transfer' : category,
-      wallet,
-      toWallet: type === 'transfer' ? toWallet : undefined,
+      category,
       note,
       tags: selectedTags,
     });
     onClose();
-  }, [addTransaction, type, parsedAmount, category, wallet, toWallet, note, selectedTags, onClose]);
+  }, [addTransaction, type, parsedAmount, category, note, selectedTags, onClose]);
 
   // Physical Numpad & Keyboard Listener
   useEffect(() => {
@@ -155,9 +149,6 @@ const AddTransactionModal = ({ onClose }) => {
     setCategory(targetCats[0]?.id || 'other');
   };
 
-  const usdRate = useStore((s) => s.usdRate || 16250);
-  const selectedWalletObj = WALLETS.find((w) => w.id === wallet);
-  const isUsd = selectedWalletObj?.currency === 'USD';
 
   return (
     <>
@@ -192,7 +183,7 @@ const AddTransactionModal = ({ onClose }) => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--text-primary)' }}>
-                {type === 'transfer' ? 'Transfer Antar Rekening' : 'Tambah Transaksi'}
+                Tambah Transaksi
               </h2>
               {(amount !== '' || note !== '' || step === 'detail') && (
                 <button
@@ -200,7 +191,7 @@ const AddTransactionModal = ({ onClose }) => {
                   onClick={handleReset}
                   style={{
                     backgroundColor: 'var(--bg-card-subtle)',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-full)',
                     padding: '3px 8px',
                     fontSize: '0.6875rem',
@@ -247,9 +238,9 @@ const AddTransactionModal = ({ onClose }) => {
                         flex: 1,
                         padding: '7px 0',
                         borderRadius: 'var(--radius-sm)',
-                        border: type === 'expense' ? '1px solid #FECDD3' : '1px solid transparent',
+                        border: type === 'expense' ? '2px solid #111111' : '2px solid transparent',
                         cursor: 'pointer',
-                        backgroundColor: type === 'expense' ? '#FFF1F2' : 'transparent',
+                        backgroundColor: type === 'expense' ? '#FFD0D6' : 'transparent',
                         color: type === 'expense' ? '#9F1239' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: '0.75rem',
@@ -260,7 +251,7 @@ const AddTransactionModal = ({ onClose }) => {
                         transition: 'all 0.15s',
                       }}
                     >
-                      <TrendingDown size={13} color="#E11D48" /> Keluar
+                      <TrendingDown size={13} color="#C1123A" /> Keluar
                     </button>
                     <button
                       className="tab-btn"
@@ -269,9 +260,9 @@ const AddTransactionModal = ({ onClose }) => {
                         flex: 1,
                         padding: '7px 0',
                         borderRadius: 'var(--radius-sm)',
-                        border: type === 'income' ? '1px solid #A7F3D0' : '1px solid transparent',
+                        border: type === 'income' ? '2px solid #111111' : '2px solid transparent',
                         cursor: 'pointer',
-                        backgroundColor: type === 'income' ? '#ECFDF5' : 'transparent',
+                        backgroundColor: type === 'income' ? '#C4F2DA' : 'transparent',
                         color: type === 'income' ? '#065F46' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: '0.75rem',
@@ -282,114 +273,21 @@ const AddTransactionModal = ({ onClose }) => {
                         transition: 'all 0.15s',
                       }}
                     >
-                      <TrendingUp size={13} color="#059669" /> Masuk
-                    </button>
-                    <button
-                      className="tab-btn"
-                      onClick={() => handleTypeSwitch('transfer')}
-                      style={{
-                        flex: 1,
-                        padding: '7px 0',
-                        borderRadius: 'var(--radius-sm)',
-                        border: type === 'transfer' ? '1px solid #C7D2FE' : '1px solid transparent',
-                        cursor: 'pointer',
-                        backgroundColor: type === 'transfer' ? '#EEF2FF' : 'transparent',
-                        color: type === 'transfer' ? '#4338CA' : 'var(--text-secondary)',
-                        fontWeight: 600,
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 4,
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      <ArrowLeftRight size={13} color="#4F46E5" /> Transfer
+                      <TrendingUp size={13} color="#046C4E" /> Masuk
                     </button>
                   </div>
                 </div>
-
-                {/* Quick Wallet Selector (Horizontal Scroll) */}
-                <div style={{ display: 'flex', gap: 6, padding: '0 18px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-                  {WALLETS.map((w) => {
-                    const isSelected = wallet === w.id;
-                    return (
-                      <button
-                        key={w.id}
-                        type="button"
-                        onClick={() => setWallet(w.id)}
-                        style={{
-                          flexShrink: 0,
-                          padding: '4px 9px',
-                          borderRadius: 'var(--radius-full)',
-                          border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
-                          backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 5,
-                          fontSize: '0.6875rem',
-                          fontWeight: isSelected ? 700 : 500,
-                          color: isSelected ? w.color : 'var(--text-secondary)',
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        <AppIcon name={w.iconName} size={11} color={w.color} />
-                        {type === 'transfer' && isSelected ? `Dari: ${w.label}` : w.label} {w.currency === 'USD' && <span style={{ fontSize: '0.5625rem', opacity: 0.8 }}>(USD)</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Optional To Wallet for Transfer */}
-                {type === 'transfer' && (
-                  <div style={{ display: 'flex', gap: 6, padding: '0 18px 8px', overflowX: 'auto', scrollbarWidth: 'none' }}>
-                    {WALLETS.filter(w => w.id !== wallet).map((w) => {
-                      const isSelected = toWallet === w.id;
-                      return (
-                        <button
-                          key={w.id}
-                          type="button"
-                          onClick={() => setToWallet(w.id)}
-                          style={{
-                            flexShrink: 0,
-                            padding: '4px 9px',
-                            borderRadius: 'var(--radius-full)',
-                            border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
-                            backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 5,
-                            fontSize: '0.6875rem',
-                            fontWeight: isSelected ? 700 : 500,
-                            color: isSelected ? w.color : 'var(--text-secondary)',
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          <AppIcon name={w.iconName} size={11} color={w.color} />
-                          {isSelected ? `Ke: ${w.label}` : w.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
 
                 {/* Amount Display */}
                 <div style={{ textAlign: 'center', padding: '8px 18px 16px' }}>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 4, fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                    <span>Nominal {isUsd ? 'Dollar (USD)' : 'Rupiah (IDR)'}</span>
-                    {isUsd && (
-                      <span style={{ backgroundColor: '#F0F7FF', color: '#0079C1', border: '1px solid #BAE0FD', fontSize: '0.625rem', padding: '1px 6px', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-                        $1 = {formatIDR(usdRate)}
-                      </span>
-                    )}
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: 4, fontWeight: 500 }}>
+                    Nominal Rupiah (IDR)
                   </div>
                   <div
                     className="amount"
                     style={{
                       fontSize: amount ? '2.5rem' : '1.75rem',
-                      color: isUsd ? '#0079C1' : amount ? 'var(--text-primary)' : 'var(--text-muted)',
+                      color: amount ? 'var(--text-primary)' : 'var(--text-muted)',
                       letterSpacing: '-0.04em',
                       minHeight: 52,
                       display: 'flex',
@@ -399,20 +297,13 @@ const AddTransactionModal = ({ onClose }) => {
                   >
                     {amount ? (
                       <>
-                        <span style={{ fontSize: '1.25rem', marginRight: 4, color: isUsd ? '#0079C1' : 'var(--text-muted)' }}>
-                          {isUsd ? '$' : 'Rp'}
-                        </span>
-                        {isUsd ? amount : formatIDR(parsedAmount).replace('Rp', '').trim()}
+                        <span style={{ fontSize: '1.25rem', marginRight: 4, color: 'var(--text-muted)' }}>Rp</span>
+                        {formatIDR(parsedAmount).replace('Rp', '').trim()}
                       </>
                     ) : (
-                      <span style={{ color: 'var(--text-disabled)', fontSize: '1.5rem' }}>{isUsd ? '$ 0.00' : 'Rp 0'}</span>
+                      <span style={{ color: 'var(--text-disabled)', fontSize: '1.5rem' }}>Rp 0</span>
                     )}
                   </div>
-                  {isUsd && parsedAmount > 0 && (
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: 2, fontWeight: 600 }}>
-                      ≈ {formatIDR(parsedAmount * usdRate)}
-                    </div>
-                  )}
                 </div>
 
                 {/* Numpad */}
@@ -435,11 +326,11 @@ const AddTransactionModal = ({ onClose }) => {
                           backgroundColor: isPressed
                             ? 'var(--brand-primary)'
                             : key === '⌫'
-                            ? '#FFF1F2'
+                            ? '#FFD0D6'
                             : '#FFFFFF',
-                          border: isPressed ? '1px solid #18181B' : '1px solid var(--border-subtle)',
+                          border: isPressed ? '2px solid #111111' : '1px solid var(--border-subtle)',
                           borderRadius: 'var(--radius-md)',
-                          color: isPressed ? '#FFFFFF' : key === '⌫' ? '#E11D48' : 'var(--text-primary)',
+                          color: isPressed ? '#FFFFFF' : key === '⌫' ? '#C1123A' : 'var(--text-primary)',
                           fontSize: '1.125rem',
                           fontWeight: 600,
                           cursor: 'pointer',
@@ -460,20 +351,12 @@ const AddTransactionModal = ({ onClose }) => {
 
                 {/* Quick Add Chips */}
                 <div style={{ display: 'flex', gap: 6, padding: '0 18px 10px', justifyContent: 'center' }}>
-                  {(isUsd
-                    ? [
-                        ['+$5', 5],
-                        ['+$10', 10],
-                        ['+$50', 50],
-                        ['+$100', 100],
-                      ]
-                    : [
-                        ['+10rb', 10000],
-                        ['+50rb', 50000],
-                        ['+100rb', 100000],
-                        ['+500rb', 500000],
-                      ]
-                  ).map(([label, addVal]) => (
+                  {[
+                    ['+10rb', 10000],
+                    ['+50rb', 50000],
+                    ['+100rb', 100000],
+                    ['+500rb', 500000],
+                  ].map(([label, addVal]) => (
                     <button
                       key={label}
                       type="button"
@@ -486,7 +369,7 @@ const AddTransactionModal = ({ onClose }) => {
                         padding: '5px 0',
                         borderRadius: 'var(--radius-sm)',
                         backgroundColor: '#FFFFFF',
-                        border: '1px solid var(--border-subtle)',
+                        border: '2px solid var(--border-subtle)',
                         fontSize: '0.6875rem',
                         fontWeight: 600,
                         color: 'var(--text-secondary)',
@@ -511,7 +394,7 @@ const AddTransactionModal = ({ onClose }) => {
                     padding: '4px 10px',
                     backgroundColor: 'var(--bg-card-subtle)',
                     borderRadius: 'var(--radius-full)',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                     color: 'var(--text-secondary)',
                     fontSize: '0.6875rem',
                   }}
@@ -548,34 +431,14 @@ const AddTransactionModal = ({ onClose }) => {
                     justifyContent: 'space-between',
                     backgroundColor: 'var(--bg-card-subtle)',
                     borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                   }}
                 >
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-                    Nominal {isUsd ? '(USD)' : ''}
-                  </span>
-                  {isUsd ? (
-                    <div style={{ textAlign: 'right' }}>
-                      <div
-                        className="amount"
-                        style={{
-                          color: type === 'expense' ? '#E11D48' : '#059669',
-                          fontSize: '1rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {type === 'expense' ? '- ' : '+ '}
-                        {formatUSD(parsedAmount)}
-                      </div>
-                      <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                        ≈ {formatIDR(parsedAmount * usdRate)}
-                      </div>
-                    </div>
-                  ) : (
+                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>Nominal</span>
                     <span
                       className="amount"
                       style={{
-                        color: type === 'expense' ? '#E11D48' : '#059669',
+                        color: type === 'expense' ? '#C1123A' : '#046C4E',
                         fontSize: '1rem',
                         fontWeight: 700,
                       }}
@@ -583,108 +446,9 @@ const AddTransactionModal = ({ onClose }) => {
                       {type === 'expense' ? '- ' : '+ '}
                       {formatIDR(parsedAmount)}
                     </span>
-                  )}
                 </div>
 
-                {/* Transfer Source & Destination OR Category Grid */}
-                {type === 'transfer' ? (
-                  <div style={{ marginBottom: 14 }}>
-                    {/* Visual Flow Card */}
-                    <div
-                      style={{
-                        padding: '12px 14px',
-                        backgroundColor: '#EEF2FF',
-                        border: '1px solid #C7D2FE',
-                        borderRadius: 'var(--radius-md)',
-                        marginBottom: 14,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: '0.6875rem', color: '#6366F1' }}>Dari:</span>
-                        <strong style={{ fontSize: '0.8125rem', color: '#3730A3' }}>
-                          {WALLETS.find((w) => w.id === wallet)?.label}
-                        </strong>
-                      </div>
-                      <ArrowRight size={16} color="#4F46E5" />
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: '0.6875rem', color: '#6366F1' }}>Ke:</span>
-                        <strong style={{ fontSize: '0.8125rem', color: '#3730A3' }}>
-                          {WALLETS.find((w) => w.id === toWallet)?.label}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="section-title">Dari Dompet / Rekening (Asal)</div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                      {WALLETS.map((w) => {
-                        const isSelected = wallet === w.id;
-                        return (
-                          <button
-                            key={w.id}
-                            type="button"
-                            onClick={() => {
-                              setWallet(w.id);
-                              if (toWallet === w.id) {
-                                const next = WALLETS.find((other) => other.id !== w.id);
-                                if (next) setToWallet(next.id);
-                              }
-                            }}
-                            style={{
-                              padding: '5px 10px',
-                              borderRadius: 'var(--radius-full)',
-                              border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
-                              backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 5,
-                              fontSize: '0.75rem',
-                              fontWeight: isSelected ? 700 : 500,
-                              color: isSelected ? w.color : 'var(--text-secondary)',
-                            }}
-                          >
-                            <AppIcon name={w.iconName} size={12} color={w.color} />
-                            {w.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div className="section-title">Ke Dompet / Rekening (Tujuan)</div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                      {WALLETS.filter((w) => w.id !== wallet).map((w) => {
-                        const isSelected = toWallet === w.id;
-                        return (
-                          <button
-                            key={w.id}
-                            type="button"
-                            onClick={() => setToWallet(w.id)}
-                            style={{
-                              padding: '5px 10px',
-                              borderRadius: 'var(--radius-full)',
-                              border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
-                              backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 5,
-                              fontSize: '0.75rem',
-                              fontWeight: isSelected ? 700 : 500,
-                              color: isSelected ? w.color : 'var(--text-secondary)',
-                            }}
-                          >
-                            <AppIcon name={w.iconName} size={12} color={w.color} />
-                            {w.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <>
+                <>
                     {/* Category Grid */}
                     <div style={{ marginBottom: 14 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -719,7 +483,7 @@ const AddTransactionModal = ({ onClose }) => {
                               style={{
                                 padding: '7px 3px',
                                 borderRadius: 'var(--radius-md)',
-                                border: `1.5px solid ${isSelected ? cat.color : 'var(--border-subtle)'}`,
+                                border: `2px solid ${isSelected ? cat.color : 'var(--border-subtle)'}`,
                                 backgroundColor: isSelected ? cat.colorBg : '#FFFFFF',
                                 cursor: 'pointer',
                                 display: 'flex',
@@ -729,7 +493,7 @@ const AddTransactionModal = ({ onClose }) => {
                                 transition: 'all 0.15s',
                               }}
                             >
-                              <AppIcon name={cat.iconName} size={17} color={isSelected ? cat.color : '#71717A'} />
+                              <AppIcon name={cat.iconName} size={17} color={isSelected ? cat.color : '#57534E'} />
                               <span
                                 style={{
                                   fontSize: '0.625rem',
@@ -756,7 +520,7 @@ const AddTransactionModal = ({ onClose }) => {
                           style={{
                             padding: '7px 3px',
                             borderRadius: 'var(--radius-md)',
-                            border: '1.5px dashed var(--border-medium)',
+                            border: '2px dashed var(--border-medium)',
                             backgroundColor: 'transparent',
                             cursor: 'pointer',
                             display: 'flex',
@@ -785,8 +549,7 @@ const AddTransactionModal = ({ onClose }) => {
                           </div>
                         );
                       }
-                      const expenseInIDR = isUsd ? parsedAmount * usdRate : parsedAmount;
-                      const remainingAfterTx = env.remaining - expenseInIDR;
+                      const remainingAfterTx = env.remaining - parsedAmount;
                       const willOverbudget = remainingAfterTx < 0;
 
                       return (
@@ -795,8 +558,8 @@ const AddTransactionModal = ({ onClose }) => {
                             marginTop: 8,
                             padding: '8px 10px',
                             borderRadius: 'var(--radius-sm)',
-                            backgroundColor: willOverbudget ? '#FFF1F2' : env.isWarning ? '#FFFBEB' : '#F0FDF4',
-                            border: `1px solid ${willOverbudget ? '#FECDD3' : env.isWarning ? '#FDE68A' : '#BBF7D0'}`,
+                            backgroundColor: willOverbudget ? '#FFD0D6' : env.isWarning ? '#FFE89A' : '#C4F2DA',
+                            border: `2px solid ${willOverbudget ? '#111111' : env.isWarning ? '#111111' : '#111111'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
@@ -804,14 +567,14 @@ const AddTransactionModal = ({ onClose }) => {
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <Mail size={13} color={willOverbudget ? '#E11D48' : '#059669'} />
+                            <Mail size={13} color={willOverbudget ? '#C1123A' : '#046C4E'} />
                             <span style={{ color: 'var(--text-secondary)' }}>Sisa Amplop:</span>
-                            <strong style={{ color: env.remaining < 0 ? '#E11D48' : 'var(--text-primary)' }}>
+                            <strong style={{ color: env.remaining < 0 ? '#C1123A' : 'var(--text-primary)' }}>
                               {formatIDR(env.remaining)}
                             </strong>
                           </div>
                           {willOverbudget ? (
-                            <span style={{ color: '#E11D48', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <span style={{ color: '#C1123A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
                               <AlertTriangle size={11} /> Minus {formatCompact(Math.abs(remainingAfterTx))}
                             </span>
                           ) : (
@@ -823,53 +586,7 @@ const AddTransactionModal = ({ onClose }) => {
                       );
                     })()}
 
-                    {/* Wallet Selector */}
-                    <div style={{ marginBottom: 14 }}>
-                      <div className="section-title">Dompet / Rekening</div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                        {WALLETS.map((w) => {
-                          const isSelected = wallet === w.id;
-                          return (
-                            <button
-                              key={w.id}
-                              type="button"
-                              onClick={() => setWallet(w.id)}
-                              style={{
-                                padding: '5px 10px',
-                                borderRadius: 'var(--radius-full)',
-                                border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
-                                backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 6,
-                                boxShadow: 'var(--shadow-xs)',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: 18,
-                                  height: 18,
-                                  borderRadius: '50%',
-                                  backgroundColor: w.colorBg || '#F4F4F5',
-                                  border: `1px solid ${w.colorBorder || '#E4E4E7'}`,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                <AppIcon name={w.iconName} size={11} color={w.color} />
-                              </div>
-                              <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? w.color : 'var(--text-primary)' }}>
-                                {w.label}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
+                </>
 
               {/* Labels / Tags */}
               <div style={{ marginBottom: 14 }}>
@@ -943,7 +660,7 @@ const AddTransactionModal = ({ onClose }) => {
                         style={{
                           padding: '4px 10px',
                           borderRadius: 'var(--radius-full)',
-                          border: `1.5px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                          border: `2px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
                           backgroundColor: isSelected ? 'var(--bg-card-subtle)' : '#FFFFFF',
                           color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
                           fontSize: '0.6875rem',

@@ -12,9 +12,9 @@ const pageVariants = {
 
 const DashboardPage = ({ onNavigate }) => {
   return (
-    <motion.div className="page" variants={pageVariants} initial="initial" animate="animate" exit="exit">
-      <div style={{ paddingTop: 8 }}>
-        <HeroCard />
+    <motion.div className="page page-wide" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+      <div className="dashboard-grid">
+        <HeroCard onNavigate={onNavigate} />
         <MonthlyChart onNavigate={onNavigate} />
         <RecentTransactions onViewAll={() => onNavigate('transactions')} />
       </div>

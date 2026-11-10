@@ -1,27 +1,27 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Save, RotateCcw, ArrowRight, ShieldCheck, Wallet } from 'lucide-react';
+import { X, Save, RotateCcw, ShieldCheck } from 'lucide-react';
 import useStore from '../../store/useStore';
-import { WALLETS } from '../../utils/categories';
-import { formatIDR, formatWalletAmount } from '../../utils/formatters';
+import { WALLETS, MAIN_WALLET_ID, INVESTMENT_TYPES } from '../../utils/categories';
+import { formatIDR } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 
-const TYPES = ['Saham', 'Reksa Dana', 'Emas', 'Crypto', 'Properti', 'Lainnya'];
+const TYPES = INVESTMENT_TYPES;
 
 const AddInvestmentModal = ({ onClose }) => {
   const addInvestment = useStore((s) => s.addInvestment);
-  const walletBalances = useStore((s) => s.walletBalances) || {};
+  const walletBalance = useStore((s) => s.walletBalance) || 0;
 
   const [name, setName] = useState('');
   const [type, setType] = useState(TYPES[0]);
   const [amount, setAmount] = useState('');
-  const [sourceWallet, setSourceWallet] = useState('bca'); // 'none' | walletId
+  const [sourceWallet, setSourceWallet] = useState(MAIN_WALLET_ID); // 'none' | MAIN_WALLET_ID
 
   const handleReset = () => {
     setName('');
     setType(TYPES[0]);
     setAmount('');
-    setSourceWallet('bca');
+    setSourceWallet(MAIN_WALLET_ID);
   };
 
   const handleSave = (e) => {
@@ -33,7 +33,7 @@ const AddInvestmentModal = ({ onClose }) => {
       name,
       type,
       amount: parsedAmount,
-      sourceWallet,
+      fromWallet: sourceWallet !== 'none',
     });
     onClose();
   };
@@ -78,8 +78,8 @@ const AddInvestmentModal = ({ onClose }) => {
                 width: 28,
                 height: 28,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#FFFBEB',
-                color: '#D97706',
+                backgroundColor: '#FFE89A',
+                color: '#A85800',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -128,7 +128,7 @@ const AddInvestmentModal = ({ onClose }) => {
                     style={{
                       padding: '6px 12px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1.5px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                      border: `2px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
                       backgroundColor: isSelected ? 'var(--bg-card-subtle)' : '#FFFFFF',
                       cursor: 'pointer',
                       color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -159,10 +159,10 @@ const AddInvestmentModal = ({ onClose }) => {
             />
           </div>
 
-          {/* Source Wallet (Potong Rekening) */}
+          {/* Funding source: from the wallet, or record-only */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-              Sumber Dana (Potong Saldo Dari Rekening):
+              Sumber Dana:
             </label>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button
@@ -171,7 +171,7 @@ const AddInvestmentModal = ({ onClose }) => {
                 style={{
                   padding: '5px 10px',
                   borderRadius: 'var(--radius-full)',
-                  border: `1.5px solid ${sourceWallet === 'none' ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                  border: `2px solid ${sourceWallet === 'none' ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
                   backgroundColor: sourceWallet === 'none' ? 'var(--bg-card-subtle)' : '#FFFFFF',
                   cursor: 'pointer',
                   fontSize: '0.6875rem',
@@ -179,12 +179,11 @@ const AddInvestmentModal = ({ onClose }) => {
                   color: sourceWallet === 'none' ? 'var(--text-primary)' : 'var(--text-secondary)',
                 }}
               >
-                🚫 Tidak Potong Rekening (Aset Lama)
+                🚫 Tidak Potong Dompet (Aset Lama)
               </button>
 
               {WALLETS.map((w) => {
                 const isSelected = sourceWallet === w.id;
-                const bal = walletBalances[w.id] || 0;
                 return (
                   <button
                     key={w.id}
@@ -193,7 +192,7 @@ const AddInvestmentModal = ({ onClose }) => {
                     style={{
                       padding: '5px 10px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
+                      border: `2px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
                       backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
                       cursor: 'pointer',
                       display: 'flex',
@@ -205,7 +204,7 @@ const AddInvestmentModal = ({ onClose }) => {
                     }}
                   >
                     <AppIcon name={w.iconName} size={11} color={w.color} />
-                    {w.label} {bal > 0 && `(${formatWalletAmount(bal, w.id)})`}
+                    Potong dari {w.label} ({formatIDR(walletBalance)})
                   </button>
                 );
               })}
@@ -217,8 +216,8 @@ const AddInvestmentModal = ({ onClose }) => {
             <div
               style={{
                 padding: '10px 12px',
-                backgroundColor: '#F0FDF4',
-                border: '1px solid #BBF7D0',
+                backgroundColor: '#C4F2DA',
+                border: '2px solid #111111',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.75rem',
                 color: '#166534',
@@ -233,14 +232,14 @@ const AddInvestmentModal = ({ onClose }) => {
               style={{
                 padding: '8px 12px',
                 backgroundColor: 'var(--bg-card-subtle)',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.6875rem',
                 color: 'var(--text-muted)',
                 marginBottom: 20,
               }}
             >
-              Hanya mencatat nilai portofolio tanpa mengubah saldo rekening/dompet Anda.
+              Hanya mencatat nilai portofolio tanpa mengubah saldo dompet Anda.
             </div>
           )}
 

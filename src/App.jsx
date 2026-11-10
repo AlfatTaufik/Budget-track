@@ -48,7 +48,7 @@ class ErrorBoundary extends Component {
               width: 52,
               height: 52,
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#18181B',
+              backgroundColor: '#111111',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -61,7 +61,7 @@ class ErrorBoundary extends Component {
           <h2 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: 8, color: 'var(--text-primary)' }}>
             Terjadi Kesalahan Tampilan
           </h2>
-          <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', maxWidth: 320, marginBottom: 20, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', maxWidth: 320, marginBottom: 20, lineHeight: 1.5 }}>
             Halaman sedang diperbarui. Silakan muat ulang untuk memulihkan tampilan.
           </p>
           <button
@@ -75,7 +75,7 @@ class ErrorBoundary extends Component {
               gap: 6,
               padding: '10px 18px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#18181B',
+              backgroundColor: '#111111',
               color: '#FFFFFF',
               border: 'none',
               fontSize: '0.875rem',
@@ -124,7 +124,7 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [setAuthLoading]);
 
-  // Loading Screen (StudyTracker Clean Zinc Style)
+  // Loading Screen
   if (authLoading) {
     return (
       <div
@@ -143,19 +143,20 @@ function AppContent() {
             width: 48,
             height: 48,
             borderRadius: 'var(--radius-md)',
-            backgroundColor: '#18181B',
+            backgroundColor: 'var(--block-yellow)',
+            border: '2px solid var(--ink)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: 'var(--shadow-xs)',
+            color: 'var(--ink)',
+            boxShadow: 'var(--shadow-card)',
           }}
         >
           <Wallet size={22} strokeWidth={2.2} />
         </div>
-        <Loader2 size={18} color="#18181B" style={{ animation: 'spin 1s linear infinite' }} />
+        <Loader2 size={18} color="#111111" style={{ animation: 'spin 1s linear infinite' }} />
         <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>
-          Memuat FlowWallet...
+          Memuat Nusa Track...
         </p>
       </div>
     );
@@ -169,7 +170,7 @@ function AppContent() {
   const PageComponent = PAGES[activePage] || DashboardPage;
 
   return (
-    <>
+    <div className="app-shell">
       <Header activePage={activePage} />
 
       <AnimatePresence mode="wait">
@@ -179,7 +180,7 @@ function AppContent() {
           initial="initial"
           animate="animate"
           exit="exit"
-          style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          className="app-main"
         >
           {activePage === 'dashboard' ? (
             <DashboardPage onNavigate={setActivePage} />
@@ -189,14 +190,15 @@ function AppContent() {
         </motion.div>
       </AnimatePresence>
 
-      {/* FAB (Zinc-900 / StudyTracker Style) */}
+      {/* FAB */}
       <button className="fab" onClick={() => setShowModal(true)} aria-label="Tambah Transaksi">
         <motion.div
           animate={{ rotate: showModal ? 45 : 0 }}
           transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
-          <Plus size={22} strokeWidth={2.5} />
+          <Plus size={22} strokeWidth={2.75} />
         </motion.div>
+        <span className="fab-label">Transaksi</span>
       </button>
 
       <BottomNav activePage={activePage} onNavigate={setActivePage} />
@@ -208,7 +210,7 @@ function AppContent() {
 
       {/* Global Instant Feedback Toast */}
       <Toast />
-    </>
+    </div>
   );
 }
 

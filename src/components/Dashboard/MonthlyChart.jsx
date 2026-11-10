@@ -12,7 +12,7 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          border: '1px solid var(--border-subtle)',
+          border: '2px solid var(--border-subtle)',
           borderRadius: 'var(--radius-md)',
           padding: '8px 12px',
           boxShadow: 'var(--shadow-lg)',
@@ -81,11 +81,11 @@ const MonthlyChart = ({ onNavigate }) => {
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#065F46', fontWeight: 600, backgroundColor: '#ECFDF5', padding: '2px 6px', borderRadius: 4 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#059669' }} /> Masuk
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#065F46', fontWeight: 600, backgroundColor: '#C4F2DA', padding: '2px 6px', borderRadius: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#046C4E' }} /> Masuk
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#9F1239', fontWeight: 600, backgroundColor: '#FFF1F2', padding: '2px 6px', borderRadius: 4 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#E11D48' }} /> Keluar
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#9F1239', fontWeight: 600, backgroundColor: '#FFD0D6', padding: '2px 6px', borderRadius: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#C1123A' }} /> Keluar
             </div>
           </div>
         </div>
@@ -103,32 +103,32 @@ const MonthlyChart = ({ onNavigate }) => {
                 }
               }}
             >
-              <CartesianGrid vertical={false} stroke="#E4E4E7" strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} stroke="#111111" strokeDasharray="3 3" />
               <XAxis
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#71717A', fontSize: 11, fontFamily: 'var(--font-body)' }}
+                tick={{ fill: '#57534E', fontSize: 11, fontFamily: 'var(--font-body)' }}
               />
               <YAxis
                 tickFormatter={(v) => (v > 0 ? formatIDR(v) : '0')}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#71717A', fontSize: 9, fontFamily: 'var(--font-body)' }}
+                tick={{ fill: '#57534E', fontSize: 9, fontFamily: 'var(--font-body)' }}
                 width={68}
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(24, 24, 27, 0.04)', radius: 4 }} />
               {/* StudyTracker Emerald & Rose solid bars with click support */}
               <Bar
                 dataKey="income"
-                fill="#059669"
+                fill="#046C4E"
                 radius={[3, 3, 0, 0]}
                 maxBarSize={15}
                 onClick={(entry) => handleBarClick(entry)}
               />
               <Bar
                 dataKey="expense"
-                fill="#E11D48"
+                fill="#C1123A"
                 radius={[3, 3, 0, 0]}
                 maxBarSize={15}
                 onClick={(entry) => handleBarClick(entry)}
@@ -186,8 +186,8 @@ const MonthlyChart = ({ onNavigate }) => {
                     flexShrink: 0,
                     padding: '4px 9px',
                     borderRadius: 'var(--radius-full)',
-                    border: '1px solid var(--border-subtle)',
-                    backgroundColor: isCurrent ? '#18181B' : '#FFFFFF',
+                    border: '2px solid var(--border-subtle)',
+                    backgroundColor: isCurrent ? '#111111' : '#FFFFFF',
                     color: isCurrent ? '#FFFFFF' : 'var(--text-secondary)',
                     fontSize: '0.6875rem',
                     fontWeight: 600,

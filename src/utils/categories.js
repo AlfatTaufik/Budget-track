@@ -1,37 +1,48 @@
-// Categories and wallets configuration with StudyTracker pastel palette (Emerald, Rose, Indigo, Purple, Amber, Sky, Zinc)
+// Categories and wallet configuration (neo-brutalist palette: saturated tiles, black outlines)
 
 export const EXPENSE_CATEGORIES = [
-  { id: 'food', label: 'Makan & Minum', iconName: 'UtensilsCrossed', color: '#E11D48', colorBg: '#FFF1F2', colorBorder: '#FECDD3' },  // Rose
-  { id: 'transport', label: 'Transportasi', iconName: 'Car', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE6FD' },          // Sky
-  { id: 'shopping', label: 'Belanja', iconName: 'ShoppingBag', color: '#7E22CE', colorBg: '#FAF5FF', colorBorder: '#E9D5FF' },        // Purple
-  { id: 'entertainment', label: 'Hiburan', iconName: 'Gamepad2', color: '#D97706', colorBg: '#FFFBEB', colorBorder: '#FDE68A' },     // Amber
-  { id: 'health', label: 'Kesehatan', iconName: 'Pill', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },              // Emerald
-  { id: 'bills', label: 'Tagihan', iconName: 'Lightbulb', color: '#EA580C', colorBg: '#FFF7ED', colorBorder: '#FED7AA' },            // Orange
-  { id: 'education', label: 'Pendidikan', iconName: 'GraduationCap', color: '#4F46E5', colorBg: '#EEF2FF', colorBorder: '#C7D2FE' },  // Indigo
-  { id: 'coffee', label: 'Kopi & Cafe', iconName: 'Coffee', color: '#B45309', colorBg: '#FFFBEB', colorBorder: '#FDE68A' },          // Amber/Brown
-  { id: 'subscription', label: 'Langganan', iconName: 'Smartphone', color: '#9333EA', colorBg: '#FAF5FF', colorBorder: '#E9D5FF' },  // Violet
-  { id: 'other_expense', label: 'Lainnya', iconName: 'MoreHorizontal', color: '#52525B', colorBg: '#F4F4F5', colorBorder: '#E4E4E7' },// Zinc
+  { id: 'food', label: 'Makan & Minum', iconName: 'UtensilsCrossed', color: '#C1123A', colorBg: '#FFD0D6', colorBorder: '#111111' },  // Rose
+  { id: 'transport', label: 'Transportasi', iconName: 'Car', color: '#0369A1', colorBg: '#BFE4FF', colorBorder: '#111111' },          // Sky
+  { id: 'shopping', label: 'Belanja', iconName: 'ShoppingBag', color: '#7E22CE', colorBg: '#E3D1FF', colorBorder: '#111111' },        // Purple
+  { id: 'entertainment', label: 'Hiburan', iconName: 'Gamepad2', color: '#A85800', colorBg: '#FFE89A', colorBorder: '#111111' },     // Amber
+  { id: 'health', label: 'Kesehatan', iconName: 'Pill', color: '#046C4E', colorBg: '#C4F2DA', colorBorder: '#111111' },              // Emerald
+  { id: 'bills', label: 'Tagihan', iconName: 'Lightbulb', color: '#C2410C', colorBg: '#FFD3B0', colorBorder: '#111111' },            // Orange
+  { id: 'education', label: 'Pendidikan', iconName: 'GraduationCap', color: '#4F46E5', colorBg: '#D5DBFF', colorBorder: '#111111' },  // Indigo
+  { id: 'coffee', label: 'Kopi & Cafe', iconName: 'Coffee', color: '#B45309', colorBg: '#FFE89A', colorBorder: '#111111' },          // Amber/Brown
+  { id: 'subscription', label: 'Langganan', iconName: 'Smartphone', color: '#9333EA', colorBg: '#E3D1FF', colorBorder: '#111111' },  // Violet
+  { id: 'other_expense', label: 'Lainnya', iconName: 'MoreHorizontal', color: '#44403C', colorBg: '#F3EAD3', colorBorder: '#111111' },// Zinc
 ];
 
 export const INCOME_CATEGORIES = [
-  { id: 'salary', label: 'Gaji', iconName: 'Briefcase', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },              // Emerald
-  { id: 'freelance', label: 'Freelance', iconName: 'Laptop', color: '#4F46E5', colorBg: '#EEF2FF', colorBorder: '#C7D2FE' },          // Indigo
-  { id: 'investment', label: 'Investasi', iconName: 'TrendingUp', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE6FD' },     // Sky
-  { id: 'gift', label: 'Hadiah', iconName: 'Gift', color: '#DB2777', colorBg: '#FDF2F8', colorBorder: '#FBCFE8' },                   // Pink
-  { id: 'business', label: 'Bisnis', iconName: 'Store', color: '#D97706', colorBg: '#FFFBEB', colorBorder: '#FDE68A' },              // Amber
-  { id: 'other_income', label: 'Lainnya', iconName: 'Coins', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },         // Emerald
+  { id: 'salary', label: 'Gaji', iconName: 'Briefcase', color: '#046C4E', colorBg: '#C4F2DA', colorBorder: '#111111' },              // Emerald
+  { id: 'freelance', label: 'Freelance', iconName: 'Laptop', color: '#4F46E5', colorBg: '#D5DBFF', colorBorder: '#111111' },          // Indigo
+  { id: 'investment', label: 'Investasi', iconName: 'TrendingUp', color: '#0369A1', colorBg: '#BFE4FF', colorBorder: '#111111' },     // Sky
+  { id: 'gift', label: 'Hadiah', iconName: 'Gift', color: '#DB2777', colorBg: '#FFC7F0', colorBorder: '#111111' },                   // Pink
+  { id: 'business', label: 'Bisnis', iconName: 'Store', color: '#A85800', colorBg: '#FFE89A', colorBorder: '#111111' },              // Amber
+  { id: 'other_income', label: 'Lainnya', iconName: 'Coins', color: '#046C4E', colorBg: '#C4F2DA', colorBorder: '#111111' },         // Emerald
 ];
 
+// Single wallet: all spendable money lives in one place
+export const MAIN_WALLET_ID = 'dompet';
+
 export const WALLETS = [
-  { id: 'cash', label: 'Tunai', currency: 'IDR', iconName: 'Banknote', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },
-  { id: 'bca', label: 'BCA', currency: 'IDR', iconName: 'Building2', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE6FD' },
-  { id: 'mandiri', label: 'Mandiri', currency: 'IDR', iconName: 'Building2', color: '#D97706', colorBg: '#FFFBEB', colorBorder: '#FDE68A' },
-  { id: 'seabank', label: 'SeaBank', currency: 'IDR', iconName: 'Building2', color: '#EA580C', colorBg: '#FFF7ED', colorBorder: '#FED7AA' },
-  { id: 'paypal', label: 'PayPal', currency: 'USD', iconName: 'CreditCard', color: '#0079C1', colorBg: '#F0F7FF', colorBorder: '#BAE0FD' },
-  { id: 'gopay', label: 'GoPay', currency: 'IDR', iconName: 'Smartphone', color: '#059669', colorBg: '#ECFDF5', colorBorder: '#A7F3D0' },
-  { id: 'ovo', label: 'OVO', currency: 'IDR', iconName: 'Smartphone', color: '#7E22CE', colorBg: '#FAF5FF', colorBorder: '#E9D5FF' },
-  { id: 'dana', label: 'DANA', currency: 'IDR', iconName: 'CreditCard', color: '#0284C7', colorBg: '#F0F9FF', colorBorder: '#BAE0FD' },
+  { id: MAIN_WALLET_ID, label: 'Dompet', currency: 'IDR', iconName: 'Wallet', color: '#111111', colorBg: '#FFD23F', colorBorder: '#111111' },
 ];
+
+const INVESTMENT_DESTINATION = { id: 'investasi', label: 'Investasi', currency: 'IDR', iconName: 'TrendingUp', color: '#111111', colorBg: '#C4F2DA', colorBorder: '#111111' };
+
+export const INVESTMENT_TYPES = ['ETF', 'Saham', 'Reksa Dana', 'Tabungan', 'Emas', 'Crypto', 'Properti', 'Lainnya'];
+
+export const INVESTMENT_TYPE_STYLES = {
+  'ETF': { icon: 'TrendingUp', color: '#111111', bg: '#C4F2DA', border: '#111111' },
+  'Saham': { icon: 'TrendingUp', color: '#111111', bg: '#BFE4FF', border: '#111111' },
+  'Reksa Dana': { icon: 'Coins', color: '#111111', bg: '#E3D1FF', border: '#111111' },
+  'Tabungan': { icon: 'Building2', color: '#111111', bg: '#FFD3B0', border: '#111111' },
+  'Emas': { icon: 'ShieldCheck', color: '#111111', bg: '#FFD23F', border: '#111111' },
+  'Crypto': { icon: 'Sparkles', color: '#111111', bg: '#FFC7F0', border: '#111111' },
+  'Properti': { icon: 'Building2', color: '#111111', bg: '#B8E986', border: '#111111' },
+  'Lainnya': { icon: 'Target', color: '#111111', bg: '#F3EAD3', border: '#111111' },
+};
 
 export const DEFAULT_TAGS = [
   'Pribadi',
@@ -75,16 +86,16 @@ export const CATEGORY_ICON_OPTIONS = [
 ];
 
 export const CATEGORY_COLOR_OPTIONS = [
-  { hex: '#E11D48', bg: '#FFF1F2', border: '#FECDD3', label: 'Rose' },
-  { hex: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD', label: 'Sky' },
-  { hex: '#059669', bg: '#ECFDF5', border: '#A7F3D0', label: 'Emerald' },
-  { hex: '#7E22CE', bg: '#FAF5FF', border: '#E9D5FF', label: 'Purple' },
-  { hex: '#D97706', bg: '#FFFBEB', border: '#FDE68A', label: 'Amber' },
-  { hex: '#EA580C', bg: '#FFF7ED', border: '#FED7AA', label: 'Orange' },
-  { hex: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE', label: 'Indigo' },
-  { hex: '#DB2777', bg: '#FDF2F8', border: '#FBCFE8', label: 'Pink' },
-  { hex: '#0D9488', bg: '#F0FDFA', border: '#99F6E4', label: 'Teal' },
-  { hex: '#52525B', bg: '#F4F4F5', border: '#E4E4E7', label: 'Zinc' },
+  { hex: '#C1123A', bg: '#FFD0D6', border: '#111111', label: 'Rose' },
+  { hex: '#0369A1', bg: '#BFE4FF', border: '#111111', label: 'Sky' },
+  { hex: '#046C4E', bg: '#C4F2DA', border: '#111111', label: 'Emerald' },
+  { hex: '#7E22CE', bg: '#E3D1FF', border: '#111111', label: 'Purple' },
+  { hex: '#A85800', bg: '#FFE89A', border: '#111111', label: 'Amber' },
+  { hex: '#C2410C', bg: '#FFD3B0', border: '#111111', label: 'Orange' },
+  { hex: '#4F46E5', bg: '#D5DBFF', border: '#111111', label: 'Indigo' },
+  { hex: '#DB2777', bg: '#FFC7F0', border: '#111111', label: 'Pink' },
+  { hex: '#0D9488', bg: '#B9F1E8', border: '#111111', label: 'Teal' },
+  { hex: '#44403C', bg: '#F3EAD3', border: '#111111', label: 'Zinc' },
 ];
 
 export const getCategoryById = (id, extraCategories = []) => {
@@ -102,12 +113,13 @@ export const getCategoryById = (id, extraCategories = []) => {
     id: id || 'other',
     label: id && id.startsWith('cat_') ? 'Kategori Khusus' : (id || 'Lainnya'),
     iconName: 'Tag',
-    color: '#52525B',
-    colorBg: '#F4F4F5',
-    colorBorder: '#E4E4E7',
+    color: '#44403C',
+    colorBg: '#F3EAD3',
+    colorBorder: '#111111',
   };
 };
 
+// Legacy transactions may reference old wallet ids; they all resolve to the single wallet
 export const getWalletById = (id) => {
-  return WALLETS.find((w) => w.id === id) || WALLETS[0];
+  return id === 'investasi' ? INVESTMENT_DESTINATION : WALLETS[0];
 };

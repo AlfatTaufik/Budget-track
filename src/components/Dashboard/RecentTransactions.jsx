@@ -5,13 +5,12 @@ import useStore from '../../store/useStore';
 import { getCategoryById, getWalletById } from '../../utils/categories';
 import { formatIDR, formatDateShort } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
-import ConvertToTransferModal from '../Modal/ConvertToTransferModal';
 import EditTransactionModal from '../Modal/EditTransactionModal';
 
-const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert, onEdit }) => {
+const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) => {
   const isTransfer = tx.type === 'transfer';
   const cat = isTransfer
-    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#EEF2FF' }
+    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#D5DBFF' }
     : getCategoryById(tx.category, extraCategories);
   const wallet = getWalletById(tx.wallet);
   const destWallet = isTransfer && tx.toWallet ? getWalletById(tx.toWallet) : null;
@@ -34,7 +33,7 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
         alignItems: 'center',
         gap: 12,
         padding: '11px 0',
-        borderBottom: '1px solid #F3ECE0',
+        borderBottom: '1px solid #F3EAD3',
         cursor: 'pointer',
         ...style,
       }}
@@ -47,8 +46,8 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
           width: 40,
           height: 40,
           borderRadius: 'var(--radius-md)',
-          backgroundColor: cat.colorBg || '#F5F3FC',
-          border: `1px solid ${cat.color}35`,
+          backgroundColor: cat.colorBg || '#D5DBFF',
+          border: `2px solid ${cat.color}35`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -84,10 +83,10 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
                 fontSize: '0.6875rem',
                 color: '#4338CA',
                 fontWeight: 600,
-                backgroundColor: '#EEF2FF',
+                backgroundColor: '#D5DBFF',
                 padding: '1px 7px',
                 borderRadius: 'var(--radius-full)',
-                border: '1px solid #C7D2FE',
+                border: '2px solid #111111',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
@@ -113,7 +112,7 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
                 fontSize: '0.5625rem',
                 color: 'var(--text-secondary)',
                 backgroundColor: 'var(--bg-card-subtle)',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 padding: '1px 5px',
                 borderRadius: 'var(--radius-full)',
                 fontWeight: 500,
@@ -148,7 +147,7 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
                   height: 30,
                   borderRadius: 'var(--radius-sm)',
                   backgroundColor: '#FFFFFF',
-                  border: '1px solid var(--border-subtle)',
+                  border: '2px solid var(--border-subtle)',
                   color: 'var(--text-primary)',
                   cursor: 'pointer',
                   display: 'flex',
@@ -159,32 +158,6 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
                 title="Edit transaksi ini"
               >
                 <Pencil size={13} />
-              </button>
-            )}
-
-            {!isTransfer && onConvert && (
-              <button
-                type="button"
-                onClick={() => {
-                  setShowActions(false);
-                  onConvert(tx);
-                }}
-                style={{
-                  padding: '5px 8px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#EEF2FF',
-                  border: '1px solid #C7D2FE',
-                  color: '#4F46E5',
-                  fontSize: '0.6875rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
-                }}
-                title="Ubah transaksi ini jadi transfer"
-              >
-                <ArrowLeftRight size={11} /> Transfer
               </button>
             )}
 
@@ -200,9 +173,9 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onConvert,
                   width: 30,
                   height: 30,
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#FFF1F2',
-                  border: '1px solid #FECDD3',
-                  color: '#E11D48',
+                  backgroundColor: '#FFD0D6',
+                  border: '2px solid #111111',
+                  color: '#C1123A',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -249,7 +222,6 @@ const RecentTransactions = ({ onViewAll }) => {
   const expenseCategories = useStore((s) => s.expenseCategories || []);
   const incomeCategories = useStore((s) => s.incomeCategories || []);
   const allCategories = [...expenseCategories, ...incomeCategories];
-  const [convertTx, setConvertTx] = useState(null);
   const [editTx, setEditTx] = useState(null);
 
   const recent = transactions.slice(0, 5);
@@ -297,7 +269,6 @@ const RecentTransactions = ({ onViewAll }) => {
             tx={tx}
             extraCategories={allCategories}
             onDelete={deleteTransaction}
-            onConvert={setConvertTx}
             onEdit={setEditTx}
           />
         ))
@@ -313,15 +284,6 @@ const RecentTransactions = ({ onViewAll }) => {
         )}
       </AnimatePresence>
 
-      {/* Convert to Transfer Modal */}
-      <AnimatePresence>
-        {convertTx && (
-          <ConvertToTransferModal
-            tx={convertTx}
-            onClose={() => setConvertTx(null)}
-          />
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 };

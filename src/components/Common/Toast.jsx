@@ -27,21 +27,21 @@ const Toast = () => {
             gap: 10,
             padding: '8px 14px 8px 16px',
             borderRadius: 'var(--radius-full)',
-            backgroundColor: toast.type === 'error' ? '#FFF1F2' : '#18181B',
+            backgroundColor: toast.type === 'error' ? '#FFD0D6' : '#111111',
             color: toast.type === 'error' ? '#9F1239' : '#FFFFFF',
-            border: toast.type === 'error' ? '1px solid #FECDD3' : '1px solid #27272A',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+            border: toast.type === 'error' ? '2px solid #111111' : '2px solid #111111',
+            boxShadow: '4px 4px 0 var(--block-yellow)',
             fontSize: '0.8125rem',
             fontWeight: 600,
             maxWidth: '92vw',
           }}
         >
           {toast.type === 'error' ? (
-            <AlertCircle size={16} color="#E11D48" style={{ flexShrink: 0 }} />
+            <AlertCircle size={16} color="#C1123A" style={{ flexShrink: 0 }} />
           ) : toast.type === 'info' ? (
-            <Info size={16} color="#38BDF8" style={{ flexShrink: 0 }} />
+            <Info size={16} color="#5FB2FF" style={{ flexShrink: 0 }} />
           ) : (
-            <CheckCircle2 size={16} color="#34D399" style={{ flexShrink: 0 }} />
+            <CheckCircle2 size={16} color="#F9C531" style={{ flexShrink: 0 }} />
           )}
 
           <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -61,13 +61,13 @@ const Toast = () => {
                 gap: 4,
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-full)',
-                backgroundColor: '#3B82F6',
-                color: '#FFFFFF',
+                backgroundColor: '#F9C531',
+                color: '#111111',
                 border: 'none',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(59, 130, 246, 0.3)',
+                boxShadow: 'var(--shadow-xs)',
                 flexShrink: 0,
                 transition: 'all 0.15s',
               }}
@@ -81,7 +81,7 @@ const Toast = () => {
             style={{
               background: 'none',
               border: 'none',
-              color: toast.type === 'error' ? '#9F1239' : '#A1A1AA',
+              color: toast.type === 'error' ? '#9F1239' : '#78716C',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',

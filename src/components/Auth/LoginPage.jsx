@@ -68,19 +68,20 @@ const LoginPage = ({ onLogin }) => {
             width: 52,
             height: 52,
             borderRadius: 'var(--radius-md)',
-            backgroundColor: '#18181B',
+            backgroundColor: 'var(--block-yellow)',
+            border: '2px solid var(--ink)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto 12px',
-            boxShadow: 'var(--shadow-xs)',
-            color: '#FFFFFF',
+            margin: '0 auto 14px',
+            boxShadow: 'var(--shadow-card)',
+            color: 'var(--ink)',
           }}
         >
           <Wallet size={24} strokeWidth={2.2} />
         </div>
-        <h1 style={{ fontSize: '1.375rem', letterSpacing: '-0.03em', marginBottom: 3, color: 'var(--text-primary)' }}>
-          FlowWallet
+        <h1 style={{ fontSize: '1.75rem', letterSpacing: '0.02em', textTransform: 'uppercase', marginBottom: 3, color: 'var(--text-primary)' }}>
+          Nusa Track
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
           Pencatat keuangan pribadi yang simpel & efisien
@@ -103,7 +104,7 @@ const LoginPage = ({ onLogin }) => {
               borderRadius: 'var(--radius-md)',
               padding: 3,
               marginBottom: 16,
-              border: '1px solid var(--border-subtle)',
+              border: '2px solid var(--border-subtle)',
             }}
           >
             {[
@@ -239,8 +240,8 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    backgroundColor: '#FFF1F2',
-                    border: '1px solid #FECDD3',
+                    backgroundColor: '#FFD0D6',
+                    border: '2px solid #111111',
                     borderRadius: 'var(--radius-md)',
                     padding: '8px 10px',
                     fontSize: '0.75rem',
@@ -258,8 +259,8 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    backgroundColor: '#ECFDF5',
-                    border: '1px solid #A7F3D0',
+                    backgroundColor: '#C4F2DA',
+                    border: '2px solid #111111',
                     borderRadius: 'var(--radius-md)',
                     padding: '8px 10px',
                     fontSize: '0.75rem',
@@ -307,7 +308,7 @@ const LoginPage = ({ onLogin }) => {
                 width: '100%',
                 padding: '9px 0',
                 backgroundColor: '#FFFFFF',
-                border: '1px solid var(--border-medium)',
+                border: '2px solid var(--border-medium)',
                 borderRadius: 'var(--radius-sm)',
                 color: 'var(--text-primary)',
                 fontWeight: 600,

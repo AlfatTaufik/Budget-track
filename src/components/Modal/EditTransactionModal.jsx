@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Check, ArrowLeftRight, Calendar, StickyNote, Tag, Plus, TrendingDown, TrendingUp, AlertCircle } from 'lucide-react';
 import useStore from '../../store/useStore';
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, WALLETS } from '../../utils/categories';
-import { formatIDR } from '../../utils/formatters';
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../../utils/categories';
 import AppIcon from '../Common/AppIcon';
 
 const EditTransactionModal = ({ tx, onClose }) => {
@@ -16,10 +15,13 @@ const EditTransactionModal = ({ tx, onClose }) => {
 
   // Initialize fields from existing tx
   const [type, setType] = useState(tx.type || 'expense');
-  const [amount, setAmount] = useState(tx.amount !== undefined ? String(tx.amount) : '');
+  // Legacy USD transactions are converted once here; everything is edited in Rupiah
+  const [amount, setAmount] = useState(() => {
+    if (tx.amount === undefined) return '';
+    const isLegacyUsd = tx.wallet === 'paypal' || tx.currency === 'USD';
+    return String(isLegacyUsd ? Math.round(tx.amount * (tx.exchangeRate || usdRate)) : tx.amount);
+  });
   const [category, setCategory] = useState(tx.category || (tx.type === 'expense' ? 'food' : 'salary'));
-  const [wallet, setWallet] = useState(tx.wallet || 'cash');
-  const [toWallet, setToWallet] = useState(tx.toWallet || (tx.wallet === 'bca' ? 'mandiri' : 'bca'));
   
   // Clean initial note (strip transfer prefix if present)
   const initialNote = tx.note
@@ -38,7 +40,6 @@ const EditTransactionModal = ({ tx, onClose }) => {
   const [newTagInput, setNewTagInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const isUsd = wallet === 'paypal' || tx.currency === 'USD';
   const categories = type === 'expense' ? expenseCategories : incomeCategories;
   const parsedAmount = parseFloat(amount) || 0;
 
@@ -70,10 +71,6 @@ const EditTransactionModal = ({ tx, onClose }) => {
       setErrorMsg('Nominal transaksi harus lebih dari 0.');
       return;
     }
-    if (type === 'transfer' && wallet === toWallet) {
-      setErrorMsg('Dompet asal dan tujuan tidak boleh sama.');
-      return;
-    }
 
     // Preserve time component from old date or use current time
     let finalDateIso = new Date().toISOString();
@@ -92,8 +89,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
       type,
       amount: parsedAmount,
       category: type === 'transfer' ? 'transfer' : category,
-      wallet,
-      toWallet: type === 'transfer' ? toWallet : null,
+      toWallet: type === 'transfer' ? tx.toWallet || 'investasi' : null,
       note: note.trim(),
       date: finalDateIso,
       tags: selectedTags,
@@ -146,11 +142,11 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-full)',
                 backgroundColor:
-                  type === 'transfer' ? '#EEF2FF' : type === 'income' ? '#ECFDF5' : '#FFF1F2',
+                  type === 'transfer' ? '#D5DBFF' : type === 'income' ? '#C4F2DA' : '#FFD0D6',
                 color:
-                  type === 'transfer' ? '#4F46E5' : type === 'income' ? '#059669' : '#E11D48',
-                border: `1px solid ${
-                  type === 'transfer' ? '#C7D2FE' : type === 'income' ? '#A7F3D0' : '#FECDD3'
+                  type === 'transfer' ? '#4F46E5' : type === 'income' ? '#046C4E' : '#C1123A',
+                border: `2px solid ${
+                  type === 'transfer' ? '#111111' : type === 'income' ? '#111111' : '#111111'
                 }`,
               }}
             >
@@ -172,9 +168,9 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 gap: 6,
                 padding: '8px 12px',
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#FFF1F2',
-                border: '1px solid #FECDD3',
-                color: '#E11D48',
+                backgroundColor: '#FFD0D6',
+                border: '2px solid #111111',
+                color: '#C1123A',
                 fontSize: '0.75rem',
                 fontWeight: 500,
               }}
@@ -199,10 +195,10 @@ const EditTransactionModal = ({ tx, onClose }) => {
               }}
             >
               {[
-                { id: 'expense', label: 'Pengeluaran', icon: TrendingDown, color: '#E11D48', bg: '#FFF1F2', border: '#FECDD3' },
-                { id: 'income', label: 'Pemasukan', icon: TrendingUp, color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-                { id: 'transfer', label: 'Transfer', icon: ArrowLeftRight, color: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE' },
-              ].map((t) => {
+                { id: 'expense', label: 'Pengeluaran', icon: TrendingDown, color: '#C1123A', bg: '#FFD0D6', border: '#111111' },
+                { id: 'income', label: 'Pemasukan', icon: TrendingUp, color: '#046C4E', bg: '#C4F2DA', border: '#111111' },
+                { id: 'transfer', label: 'Pindah Dana', icon: ArrowLeftRight, color: '#4F46E5', bg: '#D5DBFF', border: '#111111' },
+              ].filter((t) => t.id !== 'transfer' || tx.type === 'transfer').map((t) => {
                 const isActive = type === t.id;
                 const Icon = t.icon;
                 return (
@@ -225,7 +221,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                       flex: 1,
                       padding: '7px 0',
                       borderRadius: 'var(--radius-sm)',
-                      border: isActive ? `1px solid ${t.border}` : '1px solid transparent',
+                      border: isActive ? `1px solid ${t.border}` : '2px solid transparent',
                       backgroundColor: isActive ? t.bg : 'transparent',
                       color: isActive ? t.color : 'var(--text-secondary)',
                       fontSize: '0.75rem',
@@ -249,7 +245,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
           {/* Amount Input */}
           <div>
             <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }}>
-              Nominal Transaksi ({isUsd ? 'USD $' : 'IDR Rp'})
+              Nominal Transaksi (IDR Rp)
             </label>
             <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
               <span
@@ -258,10 +254,10 @@ const EditTransactionModal = ({ tx, onClose }) => {
                   left: 14,
                   fontSize: '1.125rem',
                   fontWeight: 700,
-                  color: type === 'income' ? '#059669' : type === 'expense' ? '#E11D48' : '#4F46E5',
+                  color: type === 'income' ? '#046C4E' : type === 'expense' ? '#C1123A' : '#4F46E5',
                 }}
               >
-                {isUsd ? '$' : 'Rp'}
+                Rp
               </span>
               <input
                 type="number"
@@ -280,7 +276,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                   fontWeight: 700,
                   fontFamily: 'Inter, monospace',
                   height: 48,
-                  borderColor: parsedAmount > 0 ? (type === 'income' ? '#059669' : type === 'expense' ? '#E11D48' : '#4F46E5') : undefined,
+                  borderColor: parsedAmount > 0 ? (type === 'income' ? '#046C4E' : type === 'expense' ? '#C1123A' : '#4F46E5') : undefined,
                 }}
                 autoFocus
               />
@@ -316,7 +312,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                     padding: '3px 8px',
                     borderRadius: 'var(--radius-full)',
                     backgroundColor: 'var(--bg-card-subtle)',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                     fontSize: '0.6875rem',
                     color: 'var(--text-secondary)',
                     fontWeight: 600,
@@ -327,12 +323,6 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 </button>
               ))}
             </div>
-
-            {isUsd && parsedAmount > 0 && (
-              <div style={{ fontSize: '0.6875rem', color: '#0079C1', marginTop: 4, fontWeight: 500 }}>
-                ≈ {formatIDR(parsedAmount * usdRate)} (Kurs: $1 = {formatIDR(usdRate)})
-              </div>
-            )}
           </div>
 
           {/* Category Picker (if not transfer) */}
@@ -361,7 +351,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                       style={{
                         padding: '8px 4px',
                         borderRadius: 'var(--radius-sm)',
-                        border: `1.5px solid ${isSelected ? cat.color : 'var(--border-subtle)'}`,
+                        border: `2px solid ${isSelected ? cat.color : 'var(--border-subtle)'}`,
                         backgroundColor: isSelected ? cat.colorBg : '#FFFFFF',
                         display: 'flex',
                         flexDirection: 'column',
@@ -397,83 +387,6 @@ const EditTransactionModal = ({ tx, onClose }) => {
                         }}
                       >
                         {cat.label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Wallet Selection */}
-          <div>
-            <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }}>
-              {type === 'transfer' ? 'Rekening / Dompet Asal' : 'Sumber Rekening / Dompet'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-              {WALLETS.map((w) => {
-                const isSelected = wallet === w.id;
-                return (
-                  <button
-                    key={w.id}
-                    type="button"
-                    onClick={() => setWallet(w.id)}
-                    style={{
-                      padding: '6px 4px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${isSelected ? w.color : 'var(--border-subtle)'}`,
-                      backgroundColor: isSelected ? w.colorBg : '#FFFFFF',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 3,
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <AppIcon name={w.iconName} size={14} color={w.color} />
-                    <span style={{ fontSize: '0.625rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? w.color : 'var(--text-secondary)' }}>
-                      {w.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Destination Wallet (if transfer) */}
-          {type === 'transfer' && (
-            <div>
-              <label style={{ fontSize: '0.6875rem', fontWeight: 600, color: '#4F46E5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, display: 'block' }}>
-                Rekening / Dompet Tujuan
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-                {WALLETS.map((w) => {
-                  const isSelected = toWallet === w.id;
-                  const isSameAsSource = wallet === w.id;
-                  return (
-                    <button
-                      key={w.id}
-                      type="button"
-                      disabled={isSameAsSource}
-                      onClick={() => setToWallet(w.id)}
-                      style={{
-                        padding: '6px 4px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: `1.5px solid ${isSelected ? '#4F46E5' : 'var(--border-subtle)'}`,
-                        backgroundColor: isSelected ? '#EEF2FF' : isSameAsSource ? '#F4F4F5' : '#FFFFFF',
-                        opacity: isSameAsSource ? 0.4 : 1,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: 3,
-                        cursor: isSameAsSource ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <AppIcon name={w.iconName} size={14} color={isSelected ? '#4F46E5' : w.color} />
-                      <span style={{ fontSize: '0.625rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#4F46E5' : 'var(--text-secondary)' }}>
-                        {w.label}
                       </span>
                     </button>
                   );
@@ -548,7 +461,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 <button
                   type="submit"
                   style={{
-                    backgroundColor: '#18181B',
+                    backgroundColor: '#111111',
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: 'var(--radius-sm)',
@@ -574,7 +487,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                     style={{
                       padding: '3px 8px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                      border: `2px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
                       backgroundColor: isSelected ? 'var(--text-primary)' : '#FFFFFF',
                       color: isSelected ? '#FFFFFF' : 'var(--text-secondary)',
                       fontSize: '0.6875rem',
@@ -608,7 +521,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
               flex: 1,
               padding: '11px',
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
+              border: '2px solid var(--border-subtle)',
               backgroundColor: '#FFFFFF',
               color: 'var(--text-secondary)',
               fontSize: '0.875rem',
@@ -626,7 +539,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
               padding: '11px',
               borderRadius: 'var(--radius-md)',
               border: 'none',
-              backgroundColor: '#18181B',
+              backgroundColor: '#111111',
               color: '#FFFFFF',
               fontSize: '0.875rem',
               fontWeight: 700,
@@ -635,7 +548,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              boxShadow: 'var(--shadow-xs)',
             }}
           >
             <Check size={16} /> Simpan Perubahan

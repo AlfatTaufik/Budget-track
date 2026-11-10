@@ -18,13 +18,13 @@ const PRESETS = [
 ];
 
 const COLORS = [
-  { hex: '#059669', bg: '#ECFDF5', border: '#A7F3D0', label: 'Emerald' },
-  { hex: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE', label: 'Indigo' },
-  { hex: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD', label: 'Sky' },
-  { hex: '#D97706', bg: '#FFFBEB', border: '#FDE68A', label: 'Amber' },
-  { hex: '#E11D48', bg: '#FFF1F2', border: '#FECDD3', label: 'Rose' },
-  { hex: '#7E22CE', bg: '#FAF5FF', border: '#E9D5FF', label: 'Purple' },
-  { hex: '#DB2777', bg: '#FDF2F8', border: '#FBCFE8', label: 'Pink' },
+  { hex: '#046C4E', bg: '#C4F2DA', border: '#111111', label: 'Emerald' },
+  { hex: '#4F46E5', bg: '#D5DBFF', border: '#111111', label: 'Indigo' },
+  { hex: '#0369A1', bg: '#BFE4FF', border: '#111111', label: 'Sky' },
+  { hex: '#A85800', bg: '#FFE89A', border: '#111111', label: 'Amber' },
+  { hex: '#C1123A', bg: '#FFD0D6', border: '#111111', label: 'Rose' },
+  { hex: '#7E22CE', bg: '#E3D1FF', border: '#111111', label: 'Purple' },
+  { hex: '#DB2777', bg: '#FFC7F0', border: '#111111', label: 'Pink' },
 ];
 
 const AddGoalModal = ({ onClose }) => {
@@ -160,7 +160,7 @@ const AddGoalModal = ({ onClose }) => {
                     style={{
                       padding: '8px 4px',
                       borderRadius: 'var(--radius-md)',
-                      border: `1.5px solid ${isSelected ? selectedColor.hex : 'var(--border-subtle)'}`,
+                      border: `2px solid ${isSelected ? selectedColor.hex : 'var(--border-subtle)'}`,
                       backgroundColor: isSelected ? selectedColor.bg : '#FFFFFF',
                       cursor: 'pointer',
                       display: 'flex',
@@ -170,7 +170,7 @@ const AddGoalModal = ({ onClose }) => {
                       transition: 'all 0.15s',
                     }}
                   >
-                    <AppIcon name={preset.iconName} size={16} color={isSelected ? selectedColor.hex : '#71717A'} />
+                    <AppIcon name={preset.iconName} size={16} color={isSelected ? selectedColor.hex : '#57534E'} />
                     <span style={{ fontSize: '0.5625rem', color: isSelected ? selectedColor.hex : 'var(--text-secondary)', fontWeight: isSelected ? 700 : 500 }}>
                       {preset.label}
                     </span>

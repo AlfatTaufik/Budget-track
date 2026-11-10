@@ -59,7 +59,7 @@ const CustomTooltip = ({ active, payload }) => {
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          border: '1px solid var(--border-subtle)',
+          border: '2px solid var(--border-subtle)',
           borderRadius: 'var(--radius-md)',
           padding: '8px 12px',
           boxShadow: 'var(--shadow-lg)',
@@ -72,7 +72,7 @@ const CustomTooltip = ({ active, payload }) => {
               height: 18,
               borderRadius: '50%',
               backgroundColor: d.colorBg,
-              border: `1px solid ${d.colorBorder || '#E4E4E7'}`,
+              border: `2px solid ${d.colorBorder || '#111111'}`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -98,7 +98,7 @@ const TrendBarTooltip = ({ active, payload, label }) => {
       <div
         style={{
           backgroundColor: '#FFFFFF',
-          border: '1px solid var(--border-subtle)',
+          border: '2px solid var(--border-subtle)',
           borderRadius: 'var(--radius-md)',
           padding: '8px 12px',
           boxShadow: 'var(--shadow-lg)',
@@ -108,16 +108,16 @@ const TrendBarTooltip = ({ active, payload, label }) => {
           {d.fullName || label}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8125rem' }}>
-          <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: '#E11D48' }} />
+          <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: '#C1123A' }} />
           <span style={{ color: 'var(--text-secondary)' }}>Pengeluaran:</span>
-          <span className="amount" style={{ color: '#E11D48', fontWeight: 600 }}>
+          <span className="amount" style={{ color: '#C1123A', fontWeight: 600 }}>
             {formatCompact(d.expense)}
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8125rem', marginTop: 2 }}>
-          <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: '#059669' }} />
+          <div style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: '#046C4E' }} />
           <span style={{ color: 'var(--text-secondary)' }}>Pemasukan:</span>
-          <span className="amount" style={{ color: '#059669', fontWeight: 600 }}>
+          <span className="amount" style={{ color: '#046C4E', fontWeight: 600 }}>
             {formatCompact(d.income)}
           </span>
         </div>
@@ -321,7 +321,7 @@ const AnalyticsPage = () => {
               gap: 4,
               padding: '5px 10px',
               borderRadius: 'var(--radius-full)',
-              backgroundColor: '#18181B',
+              backgroundColor: '#111111',
               color: '#FFFFFF',
               border: 'none',
               fontSize: '0.6875rem',
@@ -344,7 +344,7 @@ const AnalyticsPage = () => {
           padding: '12px 14px',
           marginBottom: 14,
           backgroundColor: '#FFFFFF',
-          border: '1.5px solid var(--border-medium)',
+          border: '2px solid var(--border-medium)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
@@ -355,8 +355,8 @@ const AnalyticsPage = () => {
               width: 34,
               height: 34,
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: '#F4F4F5',
+              border: '2px solid var(--border-subtle)',
+              backgroundColor: '#F3EAD3',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -384,9 +384,9 @@ const AnalyticsPage = () => {
                   letterSpacing: '0.05em',
                   padding: '1px 8px',
                   borderRadius: 'var(--radius-full)',
-                  backgroundColor: isCurrentMonth ? '#ECFDF5' : '#EEF2FF',
-                  color: isCurrentMonth ? '#059669' : '#4F46E5',
-                  border: `1px solid ${isCurrentMonth ? '#A7F3D0' : '#C7D2FE'}`,
+                  backgroundColor: isCurrentMonth ? '#C4F2DA' : '#D5DBFF',
+                  color: isCurrentMonth ? '#046C4E' : '#4F46E5',
+                  border: `2px solid ${isCurrentMonth ? '#111111' : '#111111'}`,
                 }}
               >
                 {isCurrentMonth ? 'Bulan Berjalan' : 'Riwayat Bulan Sebelumnya'}
@@ -401,8 +401,8 @@ const AnalyticsPage = () => {
               width: 34,
               height: 34,
               borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: '#F4F4F5',
+              border: '2px solid var(--border-subtle)',
+              backgroundColor: '#F3EAD3',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -438,8 +438,8 @@ const AnalyticsPage = () => {
                   flexShrink: 0,
                   padding: '5px 11px',
                   borderRadius: 'var(--radius-full)',
-                  border: `1.5px solid ${isSelected ? '#18181B' : 'var(--border-subtle)'}`,
-                  backgroundColor: isSelected ? '#18181B' : '#FFFFFF',
+                  border: `2px solid ${isSelected ? '#111111' : 'var(--border-subtle)'}`,
+                  backgroundColor: isSelected ? '#111111' : '#FFFFFF',
                   color: isSelected ? '#FFFFFF' : 'var(--text-secondary)',
                   fontSize: '0.6875rem',
                   fontWeight: isSelected ? 700 : 500,
@@ -457,7 +457,7 @@ const AnalyticsPage = () => {
                       width: 5,
                       height: 5,
                       borderRadius: '50%',
-                      backgroundColor: isSelected ? '#10B981' : '#059669',
+                      backgroundColor: isSelected ? '#046C4E' : '#046C4E',
                     }}
                   />
                 )}
@@ -477,7 +477,7 @@ const AnalyticsPage = () => {
           padding: '16px 18px',
           marginBottom: 14,
           backgroundColor: 'var(--bg-card-subtle)',
-          border: '1px solid var(--border-subtle)',
+          border: '2px solid var(--border-subtle)',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
@@ -510,9 +510,9 @@ const AnalyticsPage = () => {
                 borderRadius: 'var(--radius-full)',
                 fontSize: '0.75rem',
                 fontWeight: 700,
-                backgroundColor: monthlySummary.isHigherThanPrev ? '#FFF1F2' : '#ECFDF5',
-                color: monthlySummary.isHigherThanPrev ? '#E11D48' : '#059669',
-                border: `1px solid ${monthlySummary.isHigherThanPrev ? '#FECDD3' : '#A7F3D0'}`,
+                backgroundColor: monthlySummary.isHigherThanPrev ? '#FFD0D6' : '#C4F2DA',
+                color: monthlySummary.isHigherThanPrev ? '#C1123A' : '#046C4E',
+                border: `2px solid ${monthlySummary.isHigherThanPrev ? '#111111' : '#111111'}`,
               }}
               title={`Bulan sebelumnya: ${formatIDR(monthlySummary.prevMonthExpenses)}`}
             >
@@ -533,16 +533,16 @@ const AnalyticsPage = () => {
           <div
             style={{
               textAlign: 'center',
-              backgroundColor: '#ECFDF5',
+              backgroundColor: '#C4F2DA',
               borderRadius: 'var(--radius-sm)',
               padding: '7px 4px',
-              border: '1px solid #A7F3D0',
+              border: '2px solid #111111',
             }}
           >
             <div style={{ fontSize: '0.5625rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>
               Pemasukan
             </div>
-            <div className="amount" style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 700 }}>
+            <div className="amount" style={{ fontSize: '0.75rem', color: '#046C4E', fontWeight: 700 }}>
               {formatCompact(monthlySummary.income)}
             </div>
           </div>
@@ -550,16 +550,16 @@ const AnalyticsPage = () => {
           <div
             style={{
               textAlign: 'center',
-              backgroundColor: monthlySummary.net >= 0 ? '#EEF2FF' : '#FFF1F2',
+              backgroundColor: monthlySummary.net >= 0 ? '#D5DBFF' : '#FFD0D6',
               borderRadius: 'var(--radius-sm)',
               padding: '7px 4px',
-              border: `1px solid ${monthlySummary.net >= 0 ? '#C7D2FE' : '#FECDD3'}`,
+              border: `2px solid ${monthlySummary.net >= 0 ? '#111111' : '#111111'}`,
             }}
           >
             <div style={{ fontSize: '0.5625rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>
               Arus Kas (Net)
             </div>
-            <div className="amount" style={{ fontSize: '0.75rem', color: monthlySummary.net >= 0 ? '#4F46E5' : '#E11D48', fontWeight: 700 }}>
+            <div className="amount" style={{ fontSize: '0.75rem', color: monthlySummary.net >= 0 ? '#4F46E5' : '#C1123A', fontWeight: 700 }}>
               {monthlySummary.net >= 0 ? `+${formatCompact(monthlySummary.net)}` : formatCompact(monthlySummary.net)}
             </div>
           </div>
@@ -567,16 +567,16 @@ const AnalyticsPage = () => {
           <div
             style={{
               textAlign: 'center',
-              backgroundColor: '#FFFBEB',
+              backgroundColor: '#FFE89A',
               borderRadius: 'var(--radius-sm)',
               padding: '7px 4px',
-              border: '1px solid #FDE68A',
+              border: '2px solid #111111',
             }}
           >
             <div style={{ fontSize: '0.5625rem', color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>
               Rata-Rata / Hari
             </div>
-            <div className="amount" style={{ fontSize: '0.75rem', color: '#D97706', fontWeight: 700 }}>
+            <div className="amount" style={{ fontSize: '0.75rem', color: '#A85800', fontWeight: 700 }}>
               {formatCompact(monthlySummary.avgDailyExpense)}
             </div>
           </div>
@@ -601,8 +601,8 @@ const AnalyticsPage = () => {
                 Klik bar bulan untuk beralih analisis
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.625rem', color: '#18181B', fontWeight: 600 }}>
-              <span style={{ width: 8, height: 8, backgroundColor: '#18181B', borderRadius: 2, display: 'inline-block' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.625rem', color: '#111111', fontWeight: 600 }}>
+              <span style={{ width: 8, height: 8, backgroundColor: '#111111', borderRadius: 2, display: 'inline-block' }} />
               Bulan Dipilih ({monthName.slice(0, 3)})
             </div>
           </div>
@@ -619,18 +619,18 @@ const AnalyticsPage = () => {
               }}
               style={{ cursor: 'pointer' }}
             >
-              <CartesianGrid vertical={false} stroke="#E4E4E7" strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} stroke="#111111" strokeDasharray="3 3" />
               <XAxis
                 dataKey="name"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#71717A', fontSize: 10, fontFamily: 'var(--font-body)' }}
+                tick={{ fill: '#57534E', fontSize: 10, fontFamily: 'var(--font-body)' }}
               />
               <YAxis
                 tickFormatter={(v) => (v > 0 ? formatCompact(v) : '0')}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fill: '#71717A', fontSize: 8, fontFamily: 'var(--font-body)' }}
+                tick={{ fill: '#57534E', fontSize: 8, fontFamily: 'var(--font-body)' }}
                 width={50}
               />
               <Tooltip content={<TrendBarTooltip />} cursor={{ fill: 'rgba(24, 24, 27, 0.04)', radius: 4 }} />
@@ -646,7 +646,7 @@ const AnalyticsPage = () => {
                       y={props.y}
                       width={props.width}
                       height={props.height}
-                      fill={isCurrentSelected ? '#18181B' : '#E11D48'}
+                      fill={isCurrentSelected ? '#111111' : '#C1123A'}
                       rx={3}
                       ry={3}
                     />
@@ -684,7 +684,7 @@ const AnalyticsPage = () => {
                 gap: 4,
                 padding: '3px 8px',
                 borderRadius: 'var(--radius-full)',
-                border: '1px solid var(--border-subtle)',
+                border: '2px solid var(--border-subtle)',
                 backgroundColor: '#FFFFFF',
                 color: 'var(--text-secondary)',
                 fontSize: '0.6875rem',
@@ -708,7 +708,7 @@ const AnalyticsPage = () => {
                 style={{
                   padding: '5px 11px',
                   borderRadius: 'var(--radius-full)',
-                  border: `1.5px solid ${isPresetAll ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
+                  border: `2px solid ${isPresetAll ? 'var(--text-primary)' : 'var(--border-subtle)'}`,
                   backgroundColor: isPresetAll ? 'var(--text-primary)' : '#FFFFFF',
                   color: isPresetAll ? '#FFFFFF' : 'var(--text-secondary)',
                   fontSize: '0.75rem',
@@ -728,9 +728,9 @@ const AnalyticsPage = () => {
                     style={{
                       padding: '5px 11px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1.5px solid ${isPresetNoBills ? '#EA580C' : 'var(--border-subtle)'}`,
-                      backgroundColor: isPresetNoBills ? '#FFF7ED' : '#FFFFFF',
-                      color: isPresetNoBills ? '#EA580C' : 'var(--text-secondary)',
+                      border: `2px solid ${isPresetNoBills ? '#C2410C' : 'var(--border-subtle)'}`,
+                      backgroundColor: isPresetNoBills ? '#FFD3B0' : '#FFFFFF',
+                      color: isPresetNoBills ? '#C2410C' : 'var(--text-secondary)',
                       fontSize: '0.75rem',
                       fontWeight: isPresetNoBills ? 700 : 500,
                       cursor: 'pointer',
@@ -753,8 +753,8 @@ const AnalyticsPage = () => {
                     style={{
                       padding: '5px 11px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1.5px solid ${isPresetOnlyBills ? '#4F46E5' : 'var(--border-subtle)'}`,
-                      backgroundColor: isPresetOnlyBills ? '#EEF2FF' : '#FFFFFF',
+                      border: `2px solid ${isPresetOnlyBills ? '#4F46E5' : 'var(--border-subtle)'}`,
+                      backgroundColor: isPresetOnlyBills ? '#D5DBFF' : '#FFFFFF',
                       color: isPresetOnlyBills ? '#4F46E5' : 'var(--text-secondary)',
                       fontSize: '0.75rem',
                       fontWeight: isPresetOnlyBills ? 700 : 500,
@@ -794,8 +794,8 @@ const AnalyticsPage = () => {
                       flexShrink: 0,
                       padding: '5px 10px',
                       borderRadius: 'var(--radius-full)',
-                      border: `1.5px solid ${isHidden ? 'var(--border-subtle)' : cat.fill}`,
-                      backgroundColor: isHidden ? '#F4F4F5' : cat.colorBg,
+                      border: `2px solid ${isHidden ? 'var(--border-subtle)' : cat.fill}`,
+                      backgroundColor: isHidden ? '#F3EAD3' : cat.colorBg,
                       color: isHidden ? 'var(--text-muted)' : cat.fill,
                       fontSize: '0.6875rem',
                       fontWeight: isHidden ? 500 : 700,
@@ -809,10 +809,10 @@ const AnalyticsPage = () => {
                     }}
                     title={isHidden ? `Klik untuk tampilkan kembali pos ${cat.name}` : `Klik untuk sembunyikan pos ${cat.name}`}
                   >
-                    <AppIcon name={cat.iconName} size={12} color={isHidden ? '#A1A1AA' : cat.fill} />
+                    <AppIcon name={cat.iconName} size={12} color={isHidden ? '#78716C' : cat.fill} />
                     <span>{cat.name}</span>
                     <span style={{ fontSize: '0.625rem', opacity: 0.85 }}>({formatCompact(cat.value)})</span>
-                    {isHidden ? <EyeOff size={11} color="#71717A" /> : <Eye size={11} color={cat.fill} />}
+                    {isHidden ? <EyeOff size={11} color="#57534E" /> : <Eye size={11} color={cat.fill} />}
                   </button>
                 );
               })}
@@ -829,7 +829,7 @@ const AnalyticsPage = () => {
             padding: '10px 12px',
             backgroundColor: 'var(--bg-card-subtle)',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
+            border: '2px solid var(--border-subtle)',
             marginBottom: 14,
           }}
         >
@@ -849,10 +849,10 @@ const AnalyticsPage = () => {
 
           {hiddenData.length > 0 && (
             <div style={{ borderLeft: '1px solid var(--border-subtle)', paddingLeft: 10 }}>
-              <div style={{ fontSize: '0.625rem', color: '#EA580C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <div style={{ fontSize: '0.625rem', color: '#C2410C', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
                 <EyeOff size={10} /> Disembunyikan ({hiddenData.length} Pos)
               </div>
-              <div className="amount" style={{ fontSize: '1.0625rem', color: '#EA580C', fontWeight: 700 }}>
+              <div className="amount" style={{ fontSize: '1.0625rem', color: '#C2410C', fontWeight: 700 }}>
                 {formatIDR(totalHiddenExpense)}
               </div>
               <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)', marginTop: 2 }}>
@@ -900,9 +900,9 @@ const AnalyticsPage = () => {
                       gap: 8,
                       padding: '6px 8px',
                       borderRadius: 'var(--radius-sm)',
-                      backgroundColor: isSelected ? '#F4F4F5' : 'transparent',
+                      backgroundColor: isSelected ? '#F3EAD3' : 'transparent',
                       cursor: 'pointer',
-                      border: isSelected ? '1px solid var(--border-medium)' : '1px solid transparent',
+                      border: isSelected ? '1px solid var(--border-medium)' : '2px solid transparent',
                       transition: 'background-color 0.15s ease',
                     }}
                     title="Klik untuk memfilter daftar transaksi di bawah khusus pos ini"
@@ -913,7 +913,7 @@ const AnalyticsPage = () => {
                         height: 22,
                         borderRadius: 'var(--radius-sm)',
                         backgroundColor: d.colorBg,
-                        border: `1px solid ${d.colorBorder || '#E4E4E7'}`,
+                        border: `2px solid ${d.colorBorder || '#111111'}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -954,7 +954,7 @@ const AnalyticsPage = () => {
                   style={{
                     padding: '5px 12px',
                     borderRadius: 'var(--radius-full)',
-                    backgroundColor: '#18181B',
+                    backgroundColor: '#111111',
                     color: '#FFFFFF',
                     border: 'none',
                     fontSize: '0.75rem',
@@ -976,8 +976,8 @@ const AnalyticsPage = () => {
               marginTop: 14,
               padding: '10px 12px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#FFF7ED',
-              border: '1px solid #FED7AA',
+              backgroundColor: '#FFD3B0',
+              border: '2px solid #111111',
             }}
           >
             <div
@@ -1001,7 +1001,7 @@ const AnalyticsPage = () => {
             </div>
 
             {showHiddenList && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px dashed #FDBA74' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8, paddingTop: 8, borderTop: '1px dashed #111111' }}>
                 {hiddenData.map((d) => (
                   <div key={d.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1016,7 +1016,7 @@ const AnalyticsPage = () => {
                         style={{
                           padding: '2px 6px',
                           borderRadius: 'var(--radius-full)',
-                          border: '1px solid #FDBA74',
+                          border: '2px solid #111111',
                           backgroundColor: '#FFFFFF',
                           color: '#C2410C',
                           fontSize: '0.625rem',
@@ -1076,7 +1076,7 @@ const AnalyticsPage = () => {
           <div
             style={{
               padding: '6px 10px',
-              backgroundColor: '#EEF2FF',
+              backgroundColor: '#D5DBFF',
               borderRadius: 'var(--radius-sm)',
               marginBottom: 10,
               fontSize: '0.6875rem',
@@ -1121,7 +1121,7 @@ const AnalyticsPage = () => {
                     padding: '8px 10px',
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
@@ -1131,7 +1131,7 @@ const AnalyticsPage = () => {
                         height: 32,
                         borderRadius: 'var(--radius-sm)',
                         backgroundColor: cat.colorBg,
-                        border: `1px solid ${cat.colorBorder || '#E4E4E7'}`,
+                        border: `2px solid ${cat.colorBorder || '#111111'}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1190,7 +1190,7 @@ const AnalyticsPage = () => {
           padding: '16px 18px',
           marginBottom: 14,
           backgroundColor: 'var(--bg-card-subtle)',
-          border: '1px solid var(--border-subtle)',
+          border: '2px solid var(--border-subtle)',
         }}
       >
         <div
@@ -1210,9 +1210,9 @@ const AnalyticsPage = () => {
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
           {[
-            { label: 'Kas & Rekening', value: totalLiquid, color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-            { label: 'Tabungan', value: totalGoals, color: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE' },
-            { label: 'Investasi', value: totalInvestments, color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
+            { label: 'Kas & Rekening', value: totalLiquid, color: '#046C4E', bg: '#C4F2DA', border: '#111111' },
+            { label: 'Tabungan', value: totalGoals, color: '#4F46E5', bg: '#D5DBFF', border: '#111111' },
+            { label: 'Investasi', value: totalInvestments, color: '#A85800', bg: '#FFE89A', border: '#111111' },
           ].map((item) => (
             <div
               key={item.label}
@@ -1221,7 +1221,7 @@ const AnalyticsPage = () => {
                 backgroundColor: item.bg,
                 borderRadius: 'var(--radius-sm)',
                 padding: '7px 4px',
-                border: `1px solid ${item.border}`,
+                border: `2px solid ${item.border}`,
               }}
             >
               <div
@@ -1262,7 +1262,7 @@ const AnalyticsPage = () => {
             style={{
               padding: '4px 10px',
               backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border-subtle)',
+              border: '2px solid var(--border-subtle)',
               borderRadius: 'var(--radius-sm)',
               fontSize: '0.75rem',
               fontWeight: 600,
@@ -1292,7 +1292,7 @@ const AnalyticsPage = () => {
                     padding: '8px 10px',
                     borderRadius: 'var(--radius-sm)',
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid var(--border-subtle)',
+                    border: '2px solid var(--border-subtle)',
                   }}
                 >
                   <div
@@ -1300,8 +1300,8 @@ const AnalyticsPage = () => {
                       width: 28,
                       height: 28,
                       borderRadius: '50%',
-                      backgroundColor: inv.colorBg || '#F4F4F5',
-                      border: `1px solid ${inv.colorBorder || 'var(--border-subtle)'}`,
+                      backgroundColor: inv.colorBg || '#F3EAD3',
+                      border: `2px solid ${inv.colorBorder || 'var(--border-subtle)'}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -1333,11 +1333,11 @@ const AnalyticsPage = () => {
                       <button
                         onClick={() => handleSaveInvValue(inv.id)}
                         style={{
-                          backgroundColor: '#ECFDF5',
-                          border: '1px solid #A7F3D0',
+                          backgroundColor: '#C4F2DA',
+                          border: '2px solid #111111',
                           borderRadius: 4,
                           padding: '3px 6px',
-                          color: '#059669',
+                          color: '#046C4E',
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
@@ -1357,10 +1357,10 @@ const AnalyticsPage = () => {
                         onClick={() => setTopUpInv(inv)}
                         style={{
                           padding: '3px 8px',
-                          backgroundColor: '#ECFDF5',
-                          border: '1px solid #A7F3D0',
+                          backgroundColor: '#C4F2DA',
+                          border: '2px solid #111111',
                           borderRadius: 'var(--radius-full)',
-                          color: '#059669',
+                          color: '#046C4E',
                           fontSize: '0.6875rem',
                           fontWeight: 600,
                           cursor: 'pointer',
@@ -1395,7 +1395,7 @@ const AnalyticsPage = () => {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: '#E11D48',
+                          color: '#C1123A',
                           cursor: 'pointer',
                           padding: 2,
                         }}
@@ -1433,7 +1433,7 @@ const AnalyticsPage = () => {
             {budgetProgress.map((b) => {
               const cat = getCategoryById(b.category, allCategories);
               const pct = b.percentage;
-              const barColor = pct >= 100 ? '#E11D48' : pct >= 80 ? '#D97706' : '#059669';
+              const barColor = pct >= 100 ? '#C1123A' : pct >= 80 ? '#A85800' : '#046C4E';
               return (
                 <div key={b.id}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -1444,7 +1444,7 @@ const AnalyticsPage = () => {
                           height: 22,
                           borderRadius: 'var(--radius-sm)',
                           backgroundColor: cat.colorBg,
-                          border: `1px solid ${cat.colorBorder || '#E4E4E7'}`,
+                          border: `2px solid ${cat.colorBorder || '#111111'}`,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',

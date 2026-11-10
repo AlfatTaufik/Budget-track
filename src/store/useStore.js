@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { SAMPLE_TRANSACTIONS, SAMPLE_BUDGETS, SAMPLE_GOALS, SAMPLE_WALLETS_BALANCE, SAMPLE_INVESTMENTS } from '../utils/sampleData';
-import { DEFAULT_TAGS, EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../utils/categories';
+import { DEFAULT_TAGS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, MAIN_WALLET_ID, INVESTMENT_TYPE_STYLES } from '../utils/categories';
 import * as db from '../lib/db';
 import supabase from '../lib/supabase';
 
@@ -9,6 +8,37 @@ import supabase from '../lib/supabase';
 const isValidUUID = (str) =>
   typeof str === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+// --- Single Wallet Helpers ---
+// The app has exactly one spendable wallet. Legacy transactions may still carry old wallet ids / USD amounts.
+const txToIdr = (tx, usdRate) =>
+  tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount;
+
+// Effect of a transaction on the wallet balance (legacy wallet-to-wallet transfers are net zero)
+const walletDelta = (tx, usdRate) => {
+  const idr = txToIdr(tx, usdRate);
+  if (tx.type === 'income') return idr;
+  if (tx.type === 'expense') return -idr;
+  if (tx.type === 'transfer') return !tx.toWallet || tx.toWallet === 'investasi' ? -idr : 0;
+  return 0;
+};
+
+// One-time opening position applied when an existing account moves to the single wallet model
+const OPENING_POSITION = {
+  walletBalance: 1500000,
+  investments: [
+    { match: /etf/i, name: 'ETF', type: 'ETF', amount: 19400000 },
+    { match: /sea\s*bank/i, name: 'SeaBank', type: 'Tabungan', amount: 1000000 },
+  ],
+};
+
+const withInvestmentStyle = (inv) => {
+  const style = INVESTMENT_TYPE_STYLES[inv.type] || INVESTMENT_TYPE_STYLES['Lainnya'];
+  return { ...inv, iconName: style.icon, color: style.color, colorBg: style.bg, colorBorder: style.border };
+};
+
+// Dedupe concurrent loads (getSession + onAuthStateChange both fire on startup)
+const loadsInFlight = new Map();
 
 const getStoredCustomCategories = () => {
   try {
@@ -65,7 +95,7 @@ const useStore = create(
       budgets: [],
       goals: [],
       investments: [],
-      walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
+      walletBalance: 0,
       tags: DEFAULT_TAGS,
       expenseCategories: initialExpenseCategories,
       incomeCategories: initialIncomeCategories,
@@ -104,6 +134,13 @@ const useStore = create(
           set({ dataLoaded: true });
           return;
         }
+        if (loadsInFlight.has(userId)) return loadsInFlight.get(userId);
+        const run = get()._loadUserData(userId).finally(() => loadsInFlight.delete(userId));
+        loadsInFlight.set(userId, run);
+        return run;
+      },
+
+      _loadUserData: async (userId) => {
         try {
           const [transactions, budgets, goals, walletBalances, investments, remoteCategories] = await Promise.all([
             db.fetchTransactions(userId).catch((err) => {
@@ -120,7 +157,7 @@ const useStore = create(
             }),
             db.fetchWalletBalances(userId).catch((err) => {
               console.warn('fetchWalletBalances error:', err);
-              return {};
+              return null;
             }),
             db.fetchInvestments(userId).catch((err) => {
               console.warn('fetchInvestments error:', err);
@@ -146,8 +183,8 @@ const useStore = create(
                 type: c.type || 'expense',
                 iconName: c.iconName || c.icon || 'Tag',
                 color: c.color || '#4F46E5',
-                colorBg: c.colorBg || c.color_bg || '#EEF2FF',
-                colorBorder: c.colorBorder || c.color_border || '#C7D2FE',
+                colorBg: c.colorBg || c.color_bg || '#D5DBFF',
+                colorBorder: c.colorBorder || c.color_border || '#111111',
               });
             }
           });
@@ -199,24 +236,55 @@ const useStore = create(
             color: g.color || '#4F46E5',
           }));
 
-          const formattedInvestments = (investments || []).map((inv) => ({
-            ...inv,
-            amount: parseFloat(inv.amount),
-          }));
+          let formattedInvestments = (investments || []).map((inv) =>
+            withInvestmentStyle({ ...inv, amount: parseFloat(inv.amount) })
+          );
 
-          const defaultBalances = { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 };
-          const loadedBalances = { ...(walletBalances || {}) };
-          if (loadedBalances.shopeepay && !loadedBalances.seabank) {
-            loadedBalances.seabank = loadedBalances.shopeepay;
+          // Single wallet: the 'dompet' row is the only balance. Accounts still on the old
+          // multi-wallet model are moved over once, using the opening position.
+          let walletBalance = get().walletBalance || 0;
+          if (walletBalances) {
+            if (MAIN_WALLET_ID in walletBalances) {
+              walletBalance = walletBalances[MAIN_WALLET_ID];
+            } else {
+              const hasLegacyData =
+                Object.keys(walletBalances).length > 0 || formattedTxs.length > 0 || formattedInvestments.length > 0;
+              walletBalance = hasLegacyData ? OPENING_POSITION.walletBalance : 0;
+              try {
+                if (hasLegacyData) {
+                  for (const target of OPENING_POSITION.investments) {
+                    const existing = formattedInvestments.find((inv) => target.match.test(inv.name || ''));
+                    if (existing) {
+                      await db.updateInvestmentAmount(existing.id, target.amount, userId);
+                      formattedInvestments = formattedInvestments.map((inv) =>
+                        inv.id === existing.id ? { ...inv, amount: target.amount } : inv
+                      );
+                    } else {
+                      const saved = await db.insertInvestment(
+                        { name: target.name, type: target.type, amount: target.amount },
+                        userId
+                      );
+                      formattedInvestments = [
+                        ...formattedInvestments,
+                        withInvestmentStyle({ ...saved, amount: parseFloat(saved.amount) }),
+                      ];
+                    }
+                  }
+                }
+                await db.upsertWalletBalance(MAIN_WALLET_ID, walletBalance, userId);
+                await db.deleteLegacyWalletBalances(MAIN_WALLET_ID, userId);
+              } catch (err) {
+                console.error('Failed to move account to single wallet:', err);
+              }
+            }
           }
-          const mergedBalances = { ...defaultBalances, ...loadedBalances };
 
           set({
             transactions: formattedTxs,
             budgets: formattedBudgets,
             goals: formattedGoals,
             investments: formattedInvestments,
-            walletBalances: mergedBalances,
+            walletBalance,
             expenseCategories: finalExpenseCategories,
             incomeCategories: finalIncomeCategories,
             dataLoaded: true,
@@ -231,58 +299,41 @@ const useStore = create(
       addTransaction: async (tx) => {
         const user = get().user;
         const usdRate = get().usdRate || 16250;
-        const isUsd = tx.wallet === 'paypal' || tx.currency === 'USD';
         const newTx = {
           ...tx,
-          currency: isUsd ? 'USD' : 'IDR',
-          exchangeRate: isUsd ? (tx.exchangeRate || usdRate) : 1,
+          amount: txToIdr(tx, usdRate),
+          wallet: MAIN_WALLET_ID,
+          currency: 'IDR',
+          exchangeRate: 1,
           id: `tx_${Date.now()}`,
           date: tx.date || new Date().toISOString(),
         };
 
         // Instant Local Update
-        set((state) => {
-          const newBalances = { ...state.walletBalances };
-          if (tx.type === 'expense') {
-            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount;
-          } else if (tx.type === 'income') {
-            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) + tx.amount;
-          } else if (tx.type === 'transfer') {
-            // Transfer logic: Deduct from source, add to destination
-            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount;
-            if (tx.toWallet) {
-              let targetAmt = tx.amount;
-              if (tx.wallet === 'paypal' && tx.toWallet !== 'paypal') {
-                targetAmt = tx.amount * usdRate;
-              } else if (tx.wallet !== 'paypal' && tx.toWallet === 'paypal') {
-                targetAmt = tx.amount / usdRate;
-              }
-              newBalances[tx.toWallet] = (newBalances[tx.toWallet] || 0) + targetAmt;
-            }
-          }
-          return {
-            transactions: [newTx, ...state.transactions],
-            walletBalances: newBalances,
-          };
-        });
+        set((state) => ({
+          transactions: [newTx, ...state.transactions],
+          walletBalance: state.walletBalance + walletDelta(newTx, usdRate),
+        }));
 
         get().showToast(
-          tx.type === 'expense'
+          newTx.type === 'expense'
             ? 'Pengeluaran berhasil dicatat! ✨'
-            : tx.type === 'transfer'
-            ? 'Transfer antar rekening berhasil dicatat! 🔄'
+            : newTx.type === 'transfer'
+            ? 'Pemindahan dana berhasil dicatat! 🔄'
             : 'Pemasukan berhasil dicatat! ✨'
         );
 
         // Sync to Supabase if valid user
         if (user && isValidUUID(user.id)) {
           try {
-            const noteText = tx.type === 'transfer' && tx.toWallet
-              ? (tx.note ? `[Transfer ke ${tx.toWallet}] ${tx.note}` : `[Transfer ke ${tx.toWallet}]`)
-              : (tx.note || null);
+            const noteText = newTx.type === 'transfer' && newTx.toWallet
+              ? (newTx.note
+                  ? (newTx.note.includes('[Transfer ke') ? newTx.note : `[Transfer ke ${newTx.toWallet}] ${newTx.note}`)
+                  : `[Transfer ke ${newTx.toWallet}]`)
+              : (newTx.note || null);
 
             const saved = await db.insertTransaction(
-              { type: tx.type, amount: tx.amount, category: tx.category || 'transfer', wallet: tx.wallet, note: noteText, date: newTx.date },
+              { type: newTx.type, amount: newTx.amount, category: newTx.category || 'transfer', wallet: MAIN_WALLET_ID, note: noteText, date: newTx.date },
               user.id
             );
             if (saved?.id) {
@@ -292,16 +343,7 @@ const useStore = create(
                 ),
               }));
             }
-
-            // Sync source wallet balance
-            const currentSourceBal = get().walletBalances[tx.wallet];
-            await db.upsertWalletBalance(tx.wallet, currentSourceBal, user.id);
-
-            // If transfer, sync destination wallet balance too
-            if (tx.type === 'transfer' && tx.toWallet) {
-              const currentDestBal = get().walletBalances[tx.toWallet];
-              await db.upsertWalletBalance(tx.toWallet, currentDestBal, user.id);
-            }
+            await db.upsertWalletBalance(MAIN_WALLET_ID, get().walletBalance, user.id);
           } catch (error) {
             console.error('Failed to sync transaction to Supabase:', error);
           }
@@ -315,30 +357,10 @@ const useStore = create(
         if (!txToDelete) return;
         const previousTx = { ...txToDelete };
 
-        set((state) => {
-          const newBalances = { ...state.walletBalances };
-          if (txToDelete.type === 'expense') {
-            newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
-          } else if (txToDelete.type === 'income') {
-            newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) - txToDelete.amount;
-          } else if (txToDelete.type === 'transfer') {
-            // Revert transfer: refund source, deduct destination
-            newBalances[txToDelete.wallet] = (newBalances[txToDelete.wallet] || 0) + txToDelete.amount;
-            if (txToDelete.toWallet) {
-              let targetAmt = txToDelete.amount;
-              if (txToDelete.wallet === 'paypal' && txToDelete.toWallet !== 'paypal') {
-                targetAmt = txToDelete.amount * usdRate;
-              } else if (txToDelete.wallet !== 'paypal' && txToDelete.toWallet === 'paypal') {
-                targetAmt = txToDelete.amount / usdRate;
-              }
-              newBalances[txToDelete.toWallet] = (newBalances[txToDelete.toWallet] || 0) - targetAmt;
-            }
-          }
-          return {
-            transactions: state.transactions.filter((tx) => tx.id !== id),
-            walletBalances: newBalances,
-          };
-        });
+        set((state) => ({
+          transactions: state.transactions.filter((tx) => tx.id !== id),
+          walletBalance: state.walletBalance - walletDelta(txToDelete, usdRate),
+        }));
 
         // Provide an interactive Undo toast!
         get().showToast(
@@ -356,12 +378,7 @@ const useStore = create(
         if (user && isValidUUID(user.id)) {
           try {
             await db.deleteTransactionById(id, user.id);
-            const currentSourceBal = get().walletBalances[txToDelete.wallet];
-            await db.upsertWalletBalance(txToDelete.wallet, currentSourceBal, user.id);
-            if (txToDelete.type === 'transfer' && txToDelete.toWallet) {
-              const currentDestBal = get().walletBalances[txToDelete.toWallet];
-              await db.upsertWalletBalance(txToDelete.toWallet, currentDestBal, user.id);
-            }
+            await db.upsertWalletBalance(MAIN_WALLET_ID, get().walletBalance, user.id);
           } catch (error) {
             console.error('Failed to delete transaction from Supabase:', error);
           }
@@ -375,59 +392,20 @@ const useStore = create(
         const oldTx = get().transactions.find((tx) => tx.id === id);
         if (!oldTx) return;
 
-        const isUsd = updatedTx.wallet === 'paypal' || updatedTx.currency === 'USD';
+        // Edited amounts are always entered in Rupiah
         const newTx = {
           ...oldTx,
           ...updatedTx,
-          currency: isUsd ? 'USD' : 'IDR',
-          exchangeRate: isUsd ? (updatedTx.exchangeRate || usdRate) : 1,
+          wallet: MAIN_WALLET_ID,
+          currency: 'IDR',
+          exchangeRate: 1,
         };
 
-        // Instant Local Balance & State Update
-        set((state) => {
-          const newBalances = { ...state.walletBalances };
-
-          // 1. Revert Old Transaction Impact on Balances
-          if (oldTx.type === 'expense') {
-            newBalances[oldTx.wallet] = (newBalances[oldTx.wallet] || 0) + oldTx.amount;
-          } else if (oldTx.type === 'income') {
-            newBalances[oldTx.wallet] = (newBalances[oldTx.wallet] || 0) - oldTx.amount;
-          } else if (oldTx.type === 'transfer') {
-            newBalances[oldTx.wallet] = (newBalances[oldTx.wallet] || 0) + oldTx.amount;
-            if (oldTx.toWallet) {
-              let oldTargetAmt = oldTx.amount;
-              if (oldTx.wallet === 'paypal' && oldTx.toWallet !== 'paypal') {
-                oldTargetAmt = oldTx.amount * usdRate;
-              } else if (oldTx.wallet !== 'paypal' && oldTx.toWallet === 'paypal') {
-                oldTargetAmt = oldTx.amount / usdRate;
-              }
-              newBalances[oldTx.toWallet] = (newBalances[oldTx.toWallet] || 0) - oldTargetAmt;
-            }
-          }
-
-          // 2. Apply New Transaction Impact on Balances
-          if (newTx.type === 'expense') {
-            newBalances[newTx.wallet] = (newBalances[newTx.wallet] || 0) - newTx.amount;
-          } else if (newTx.type === 'income') {
-            newBalances[newTx.wallet] = (newBalances[newTx.wallet] || 0) + newTx.amount;
-          } else if (newTx.type === 'transfer') {
-            newBalances[newTx.wallet] = (newBalances[newTx.wallet] || 0) - newTx.amount;
-            if (newTx.toWallet) {
-              let newTargetAmt = newTx.amount;
-              if (newTx.wallet === 'paypal' && newTx.toWallet !== 'paypal') {
-                newTargetAmt = newTx.amount * usdRate;
-              } else if (newTx.wallet !== 'paypal' && newTx.toWallet === 'paypal') {
-                newTargetAmt = newTx.amount / usdRate;
-              }
-              newBalances[newTx.toWallet] = (newBalances[newTx.toWallet] || 0) + newTargetAmt;
-            }
-          }
-
-          return {
-            transactions: state.transactions.map((tx) => (tx.id === id ? newTx : tx)),
-            walletBalances: newBalances,
-          };
-        });
+        // Revert the old impact, apply the new one
+        set((state) => ({
+          transactions: state.transactions.map((tx) => (tx.id === id ? newTx : tx)),
+          walletBalance: state.walletBalance - walletDelta(oldTx, usdRate) + walletDelta(newTx, usdRate),
+        }));
 
         get().showToast('Transaksi berhasil diperbarui! ✨');
 
@@ -444,86 +422,32 @@ const useStore = create(
                 type: newTx.type,
                 amount: newTx.amount,
                 category: newTx.category || 'other_expense',
-                wallet: newTx.wallet,
+                wallet: MAIN_WALLET_ID,
                 note: noteText,
                 date: newTx.date,
               },
               user.id
             );
-
-            // Upsert all affected wallet balances to Supabase
-            const affectedWallets = Array.from(
-              new Set([oldTx.wallet, newTx.wallet, oldTx.toWallet, newTx.toWallet].filter(Boolean))
-            );
-            for (const w of affectedWallets) {
-              const bal = get().walletBalances[w] || 0;
-              await db.upsertWalletBalance(w, bal, user.id);
-            }
+            await db.upsertWalletBalance(MAIN_WALLET_ID, get().walletBalance, user.id);
           } catch (error) {
             console.error('Failed to update transaction in Supabase:', error);
           }
         }
       },
 
-      // --- Convert Existing Transaction to Transfer ---
-      convertToTransfer: async (id, toWallet) => {
+      // --- Manually set the wallet balance (e.g. to match the real balance) ---
+      setWalletBalance: async (amount) => {
         const user = get().user;
-        const usdRate = get().usdRate || 16250;
-        const tx = get().transactions.find((t) => t.id === id);
-        if (!tx || !toWallet || tx.wallet === toWallet) return;
-
-        set((state) => {
-          const newBalances = { ...state.walletBalances };
-          // If previous was expense, tx.wallet was already deducted.
-          // We just add funds to the destination wallet.
-          let targetAmt = tx.amount;
-          if (tx.wallet === 'paypal' && toWallet !== 'paypal') {
-            targetAmt = tx.amount * usdRate;
-          } else if (tx.wallet !== 'paypal' && toWallet === 'paypal') {
-            targetAmt = tx.amount / usdRate;
-          }
-
-          if (tx.type === 'income') {
-            // If was income: refund the fake income from source, then deduct from source & add to dest
-            newBalances[tx.wallet] = (newBalances[tx.wallet] || 0) - tx.amount - tx.amount;
-          }
-          newBalances[toWallet] = (newBalances[toWallet] || 0) + targetAmt;
-
-          return {
-            transactions: state.transactions.map((t) =>
-              t.id === id
-                ? {
-                    ...t,
-                    type: 'transfer',
-                    toWallet,
-                    category: 'transfer',
-                    note: t.note ? (t.note.includes('[Transfer ke') ? t.note : `[Transfer ke ${toWallet}] ${t.note}`) : `[Transfer ke ${toWallet}]`,
-                  }
-                : t
-            ),
-            walletBalances: newBalances,
-          };
-        });
-
-        get().showToast('Transaksi berhasil diubah menjadi Transfer! 🔄');
+        const value = Number(amount);
+        if (!Number.isFinite(value) || value < 0) return;
+        set({ walletBalance: value });
+        get().showToast('Saldo dompet berhasil diperbarui!');
 
         if (user && isValidUUID(user.id)) {
           try {
-            const noteText = tx.note
-              ? (tx.note.includes('[Transfer ke') ? tx.note : `[Transfer ke ${toWallet}] ${tx.note}`)
-              : `[Transfer ke ${toWallet}]`;
-
-            await db.updateTransaction(
-              id,
-              { type: 'transfer', category: 'transfer', note: noteText },
-              user.id
-            );
-
-            // Sync updated destination wallet balance
-            const currentDestBal = get().walletBalances[toWallet];
-            await db.upsertWalletBalance(toWallet, currentDestBal, user.id);
+            await db.upsertWalletBalance(MAIN_WALLET_ID, value, user.id);
           } catch (error) {
-            console.error('Failed to convert transaction in Supabase:', error);
+            console.error('Failed to sync wallet balance:', error);
           }
         }
       },
@@ -680,57 +604,29 @@ const useStore = create(
       },
 
       // --- Investments ---
-      addInvestment: async (invData) => {
+      // fromWallet: true = money leaves the wallet, false = record an asset you already own
+      addInvestment: async ({ fromWallet = false, ...invData }) => {
         const user = get().user;
         const tempId = `inv_${Date.now()}`;
-        const typeMaps = {
-          'Saham': { icon: 'TrendingUp', color: '#0284C7', bg: '#F0F9FF', border: '#BAE6FD' },
-          'Reksa Dana': { icon: 'Coins', color: '#4F46E5', bg: '#EEF2FF', border: '#C7D2FE' },
-          'Emas': { icon: 'ShieldCheck', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
-          'Crypto': { icon: 'Sparkles', color: '#7E22CE', bg: '#FAF5FF', border: '#E9D5FF' },
-          'Properti': { icon: 'Building2', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
-          'Lainnya': { icon: 'Target', color: '#52525B', bg: '#F4F4F5', border: '#E4E4E7' },
-        };
-        const mapping = typeMaps[invData.type] || typeMaps['Lainnya'];
-        const newInv = {
-          ...invData,
-          id: tempId,
-          iconName: mapping.icon,
-          color: mapping.color,
-          colorBg: mapping.bg,
-          colorBorder: mapping.border,
-        };
-
-        const sourceWallet = invData.sourceWallet;
-        const usdRate = get().usdRate || 16250;
-
-        set((state) => {
-          const newBalances = { ...state.walletBalances };
-          let newTxs = state.transactions;
-
-          if (sourceWallet && sourceWallet !== 'none') {
-            const deductAmt = sourceWallet === 'paypal' ? invData.amount / usdRate : invData.amount;
-            newBalances[sourceWallet] = (newBalances[sourceWallet] || 0) - deductAmt;
-
-            const transferTx = {
+        const newInv = withInvestmentStyle({ ...invData, id: tempId });
+        const transferTx = fromWallet
+          ? {
               id: `tx_${Date.now()}`,
               type: 'transfer',
               category: 'transfer',
-              amount: deductAmt,
-              wallet: sourceWallet,
+              amount: invData.amount,
+              wallet: MAIN_WALLET_ID,
               toWallet: 'investasi',
               note: `Investasi: ${invData.name} (${invData.type})`,
               date: new Date().toISOString(),
-            };
-            newTxs = [transferTx, ...state.transactions];
-          }
+            }
+          : null;
 
-          return {
-            investments: [...state.investments, newInv],
-            walletBalances: newBalances,
-            transactions: newTxs,
-          };
-        });
+        set((state) => ({
+          investments: [...state.investments, newInv],
+          walletBalance: state.walletBalance - (fromWallet ? invData.amount : 0),
+          transactions: transferTx ? [transferTx, ...state.transactions] : state.transactions,
+        }));
 
         get().showToast('Aset investasi berhasil disimpan! 📈');
 
@@ -750,17 +646,15 @@ const useStore = create(
               }));
             }
 
-            if (sourceWallet && sourceWallet !== 'none') {
-              const currentBal = get().walletBalances[sourceWallet];
-              await db.upsertWalletBalance(sourceWallet, currentBal, user.id);
-              const deductAmt = sourceWallet === 'paypal' ? invData.amount / usdRate : invData.amount;
+            if (transferTx) {
+              await db.upsertWalletBalance(MAIN_WALLET_ID, get().walletBalance, user.id);
               await db.insertTransaction({
                 type: 'transfer',
-                amount: deductAmt,
+                amount: transferTx.amount,
                 category: 'transfer',
-                wallet: sourceWallet,
-                note: `[Transfer ke Investasi] Beli ${invData.name}`,
-                date: new Date().toISOString(),
+                wallet: MAIN_WALLET_ID,
+                note: `[Transfer ke investasi] Beli ${invData.name}`,
+                date: transferTx.date,
               }, user.id).catch(console.warn);
             }
           } catch (error) {
@@ -787,43 +681,32 @@ const useStore = create(
         }
       },
 
-      topUpInvestment: async (invId, addAmount, sourceWallet) => {
+      topUpInvestment: async (invId, addAmount, fromWallet = true) => {
         const user = get().user;
         const inv = get().investments.find((i) => i.id === invId);
         if (!inv || addAmount <= 0) return;
 
-        const usdRate = get().usdRate || 16250;
         const newTotalAmount = inv.amount + addAmount;
-
-        set((state) => {
-          const newBalances = { ...state.walletBalances };
-          let newTxs = state.transactions;
-
-          if (sourceWallet && sourceWallet !== 'none') {
-            const deductAmt = sourceWallet === 'paypal' ? addAmount / usdRate : addAmount;
-            newBalances[sourceWallet] = (newBalances[sourceWallet] || 0) - deductAmt;
-
-            const transferTx = {
+        const transferTx = fromWallet
+          ? {
               id: `tx_${Date.now()}`,
               type: 'transfer',
               category: 'transfer',
-              amount: deductAmt,
-              wallet: sourceWallet,
+              amount: addAmount,
+              wallet: MAIN_WALLET_ID,
               toWallet: 'investasi',
               note: `Top Up Investasi: ${inv.name}`,
               date: new Date().toISOString(),
-            };
-            newTxs = [transferTx, ...state.transactions];
-          }
+            }
+          : null;
 
-          return {
-            investments: state.investments.map((i) =>
-              i.id === invId ? { ...i, amount: newTotalAmount } : i
-            ),
-            walletBalances: newBalances,
-            transactions: newTxs,
-          };
-        });
+        set((state) => ({
+          investments: state.investments.map((i) =>
+            i.id === invId ? { ...i, amount: newTotalAmount } : i
+          ),
+          walletBalance: state.walletBalance - (fromWallet ? addAmount : 0),
+          transactions: transferTx ? [transferTx, ...state.transactions] : state.transactions,
+        }));
 
         get().showToast(`Top up investasi Rp ${addAmount.toLocaleString('id-ID')} berhasil! 📈`);
 
@@ -831,17 +714,15 @@ const useStore = create(
           try {
             await db.updateInvestmentAmount(invId, newTotalAmount, user.id);
 
-            if (sourceWallet && sourceWallet !== 'none') {
-              const currentBal = get().walletBalances[sourceWallet];
-              await db.upsertWalletBalance(sourceWallet, currentBal, user.id);
-              const deductAmt = sourceWallet === 'paypal' ? addAmount / usdRate : addAmount;
+            if (transferTx) {
+              await db.upsertWalletBalance(MAIN_WALLET_ID, get().walletBalance, user.id);
               await db.insertTransaction({
                 type: 'transfer',
-                amount: deductAmt,
+                amount: addAmount,
                 category: 'transfer',
-                wallet: sourceWallet,
-                note: `[Transfer ke Investasi] Top Up ${inv.name}`,
-                date: new Date().toISOString(),
+                wallet: MAIN_WALLET_ID,
+                note: `[Transfer ke investasi] Top Up ${inv.name}`,
+                date: transferTx.date,
               }, user.id).catch(console.warn);
             }
           } catch (error) {
@@ -866,7 +747,7 @@ const useStore = create(
           {
             label: 'Batalkan (Undo)',
             onClick: async () => {
-              await get().addInvestment({ ...prevInv, sourceWallet: 'none' });
+              await get().addInvestment({ ...prevInv, fromWallet: false });
             },
           },
           5000
@@ -909,8 +790,8 @@ const useStore = create(
           type: newCat.type || 'expense',
           iconName: newCat.iconName || 'Tag',
           color: newCat.color || '#4F46E5',
-          colorBg: newCat.colorBg || '#EEF2FF',
-          colorBorder: newCat.colorBorder || '#C7D2FE',
+          colorBg: newCat.colorBg || '#D5DBFF',
+          colorBorder: newCat.colorBorder || '#111111',
         };
 
         set((state) => {
@@ -1003,7 +884,7 @@ const useStore = create(
           transactions: [],
           budgets: [],
           goals: [],
-          walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
+          walletBalance: 0,
           investments: [],
           tags: DEFAULT_TAGS,
           expenseCategories: EXPENSE_CATEGORIES,
@@ -1022,7 +903,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
-          walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
+          walletBalance: 0,
           dataLoaded: true,
         });
 
@@ -1051,7 +932,7 @@ const useStore = create(
           budgets: [],
           goals: [],
           investments: [],
-          walletBalances: { cash: 0, bca: 0, mandiri: 0, seabank: 0, paypal: 0, gopay: 0, ovo: 0, dana: 0 },
+          walletBalance: 0,
           dataLoaded: false,
         });
       },
@@ -1078,14 +959,7 @@ const useStore = create(
       },
 
       getTotalLiquidBalance: () => {
-        const balances = get().walletBalances;
-        const usdRate = get().usdRate || 16250;
-        return Object.entries(balances).reduce((sum, [walletId, v]) => {
-          if (walletId === 'paypal') {
-            return sum + (v * usdRate);
-          }
-          return sum + v;
-        }, 0);
+        return get().walletBalance || 0;
       },
 
       getTotalGoalsSaved: () => {
@@ -1348,7 +1222,7 @@ const useStore = create(
     }),
     {
       name: 'flowwallet-storage',
-      version: 7,
+      version: 8,
       migrate: () => ({
         // On version upgrade, clear any persisted finance data
       }),
@@ -1362,7 +1236,7 @@ const useStore = create(
         budgets: state.budgets,
         goals: state.goals,
         investments: state.investments,
-        walletBalances: state.walletBalances,
+        walletBalance: state.walletBalance,
         hiddenExpenseCategories: state.hiddenExpenseCategories,
       }),
     }

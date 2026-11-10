@@ -70,7 +70,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 width: 26,
                 height: 26,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#18181B',
+                backgroundColor: '#111111',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -107,9 +107,9 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 flex: 1,
                 padding: '7px 0',
                 borderRadius: 'var(--radius-sm)',
-                border: type === 'expense' ? '1px solid #FECDD3' : '1px solid transparent',
+                border: type === 'expense' ? '2px solid #111111' : '2px solid transparent',
                 cursor: 'pointer',
-                backgroundColor: type === 'expense' ? '#FFF1F2' : 'transparent',
+                backgroundColor: type === 'expense' ? '#FFD0D6' : 'transparent',
                 color: type === 'expense' ? '#9F1239' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: '0.75rem',
@@ -120,7 +120,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 transition: 'all 0.15s',
               }}
             >
-              <TrendingDown size={13} color="#E11D48" /> Pengeluaran
+              <TrendingDown size={13} color="#C1123A" /> Pengeluaran
             </button>
             <button
               type="button"
@@ -129,9 +129,9 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 flex: 1,
                 padding: '7px 0',
                 borderRadius: 'var(--radius-sm)',
-                border: type === 'income' ? '1px solid #A7F3D0' : '1px solid transparent',
+                border: type === 'income' ? '2px solid #111111' : '2px solid transparent',
                 cursor: 'pointer',
-                backgroundColor: type === 'income' ? '#ECFDF5' : 'transparent',
+                backgroundColor: type === 'income' ? '#C4F2DA' : 'transparent',
                 color: type === 'income' ? '#065F46' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: '0.75rem',
@@ -142,7 +142,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 transition: 'all 0.15s',
               }}
             >
-              <TrendingUp size={13} color="#059669" /> Pemasukan
+              <TrendingUp size={13} color="#046C4E" /> Pemasukan
             </button>
           </div>
 
@@ -187,7 +187,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                     style={{
                       padding: '8px 4px',
                       borderRadius: 'var(--radius-sm)',
-                      border: `1.5px solid ${isSelected ? selectedColor.hex : 'var(--border-subtle)'}`,
+                      border: `2px solid ${isSelected ? selectedColor.hex : 'var(--border-subtle)'}`,
                       backgroundColor: isSelected ? selectedColor.bg : '#FFFFFF',
                       cursor: 'pointer',
                       display: 'flex',
@@ -198,7 +198,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                     }}
                     title={item.label}
                   >
-                    <AppIcon name={item.name} size={17} color={isSelected ? selectedColor.hex : '#71717A'} />
+                    <AppIcon name={item.name} size={17} color={isSelected ? selectedColor.hex : '#57534E'} />
                     <span style={{ fontSize: '0.5625rem', color: isSelected ? selectedColor.hex : 'var(--text-secondary)', fontWeight: isSelected ? 700 : 500 }}>
                       {item.label}
                     </span>
@@ -244,7 +244,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
             style={{
               padding: '10px 14px',
               backgroundColor: selectedColor.bg,
-              border: `1px solid ${selectedColor.border}`,
+              border: `2px solid ${selectedColor.border}`,
               borderRadius: 'var(--radius-md)',
               display: 'flex',
               alignItems: 'center',
@@ -258,7 +258,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 height: 34,
                 borderRadius: 'var(--radius-sm)',
                 backgroundColor: '#FFFFFF',
-                border: `1px solid ${selectedColor.border}`,
+                border: `2px solid ${selectedColor.border}`,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
