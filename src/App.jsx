@@ -48,7 +48,7 @@ class ErrorBoundary extends Component {
               width: 52,
               height: 52,
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#111111',
+              backgroundColor: '#0E0E0E',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -75,7 +75,7 @@ class ErrorBoundary extends Component {
               gap: 6,
               padding: '10px 18px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: '#111111',
+              backgroundColor: '#0E0E0E',
               color: '#FFFFFF',
               border: 'none',
               fontSize: '0.875rem',
@@ -143,19 +143,17 @@ function AppContent() {
             width: 48,
             height: 48,
             borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--block-yellow)',
-            border: '2px solid var(--ink)',
+            backgroundColor: 'var(--red)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: 'var(--ink)',
-            boxShadow: 'var(--shadow-card)',
+            color: '#FFFFFF',
           }}
         >
           <Wallet size={22} strokeWidth={2.2} />
         </div>
-        <Loader2 size={18} color="#111111" style={{ animation: 'spin 1s linear infinite' }} />
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 500 }}>
+        <Loader2 size={18} color="var(--ink)" style={{ animation: 'spin 1s linear infinite' }} />
+        <p className="kicker" style={{ color: 'var(--text-muted)' }}>
           Memuat Nusa Track...
         </p>
       </div>

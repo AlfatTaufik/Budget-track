@@ -78,8 +78,8 @@ const AddInvestmentModal = ({ onClose }) => {
                 width: 28,
                 height: 28,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#FFE89A',
-                color: '#A85800',
+                backgroundColor: '#D3CEC2',
+                color: '#7A746A',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -216,11 +216,11 @@ const AddInvestmentModal = ({ onClose }) => {
             <div
               style={{
                 padding: '10px 12px',
-                backgroundColor: '#C4F2DA',
-                border: '2px solid #111111',
+                backgroundColor: '#FFFFFF',
+                border: '2px solid #0E0E0E',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.75rem',
-                color: '#166534',
+                color: '#0E0E0E',
                 lineHeight: 1.4,
                 marginBottom: 20,
               }}

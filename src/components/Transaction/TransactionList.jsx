@@ -10,7 +10,7 @@ import EditTransactionModal from '../Modal/EditTransactionModal';
 const TransactionItem = ({ tx, onDelete, onEdit, extraCategories = [] }) => {
   const isTransfer = tx.type === 'transfer';
   const cat = isTransfer
-    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#D5DBFF' }
+    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#0E0E0E', colorBg: '#D3CEC2' }
     : getCategoryById(tx.category, extraCategories);
   const wallet = getWalletById(tx.wallet);
   const destWallet = isTransfer && tx.toWallet ? getWalletById(tx.toWallet) : null;
@@ -34,7 +34,7 @@ const TransactionItem = ({ tx, onDelete, onEdit, extraCategories = [] }) => {
         alignItems: 'center',
         gap: 12,
         padding: '12px 0',
-        borderBottom: '1px solid #F3EAD3',
+        borderBottom: '1px solid #E4DED0',
         cursor: 'pointer',
       }}
       onClick={() => setShowActions(!showActions)}
@@ -44,7 +44,7 @@ const TransactionItem = ({ tx, onDelete, onEdit, extraCategories = [] }) => {
           width: 42,
           height: 42,
           borderRadius: 'var(--radius-md)',
-          backgroundColor: cat.colorBg || '#D5DBFF',
+          backgroundColor: cat.colorBg || '#D3CEC2',
           border: `2px solid ${cat.color}35`,
           display: 'flex',
           alignItems: 'center',
@@ -53,7 +53,7 @@ const TransactionItem = ({ tx, onDelete, onEdit, extraCategories = [] }) => {
         }}
       >
         {isTransfer ? (
-          <ArrowLeftRight size={18} color="#4F46E5" />
+          <ArrowLeftRight size={18} color="#0E0E0E" />
         ) : (
           <AppIcon name={cat.iconName} size={18} color={cat.color} />
         )}
@@ -78,12 +78,12 @@ const TransactionItem = ({ tx, onDelete, onEdit, extraCategories = [] }) => {
             <span
               style={{
                 fontSize: '0.6875rem',
-                color: '#4338CA',
+                color: '#0E0E0E',
                 fontWeight: 600,
-                backgroundColor: '#D5DBFF',
+                backgroundColor: '#D3CEC2',
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-full)',
-                border: '2px solid #111111',
+                border: '2px solid #0E0E0E',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
@@ -344,9 +344,9 @@ const TransactionList = () => {
                 style={{
                   padding: '5px 11px',
                   borderRadius: 'var(--radius-full)',
-                  border: `2px solid ${isActive ? (val === 'transfer' ? '#4F46E5' : 'var(--text-primary)') : 'var(--border-subtle)'}`,
-                  backgroundColor: isActive ? (val === 'transfer' ? '#D5DBFF' : 'var(--bg-card-subtle)') : '#FFFFFF',
-                  color: isActive ? (val === 'transfer' ? '#4338CA' : 'var(--text-primary)') : 'var(--text-secondary)',
+                  border: `2px solid ${isActive ? (val === 'transfer' ? '#0E0E0E' : 'var(--text-primary)') : 'var(--border-subtle)'}`,
+                  backgroundColor: isActive ? (val === 'transfer' ? '#D3CEC2' : 'var(--bg-card-subtle)') : '#FFFFFF',
+                  color: isActive ? (val === 'transfer' ? '#0E0E0E' : 'var(--text-primary)') : 'var(--text-secondary)',
                   fontSize: '0.75rem',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -367,9 +367,9 @@ const TransactionList = () => {
               style={{
                 padding: '4px 9px',
                 borderRadius: 'var(--radius-full)',
-                border: `2px solid ${excludeBills ? '#C2410C' : 'var(--border-subtle)'}`,
-                backgroundColor: excludeBills ? '#FFD3B0' : '#FFFFFF',
-                color: excludeBills ? '#C2410C' : 'var(--text-secondary)',
+                border: `2px solid ${excludeBills ? '#52504C' : 'var(--border-subtle)'}`,
+                backgroundColor: excludeBills ? '#D3CEC2' : '#FFFFFF',
+                color: excludeBills ? '#52504C' : 'var(--text-secondary)',
                 fontSize: '0.6875rem',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -475,7 +475,7 @@ const TransactionList = () => {
         <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginBottom: 10, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 4 }}>
           <span>Ditemukan <strong>{filtered.length}</strong> transaksi</span>
           {excludeBills && (
-            <span style={{ color: '#C2410C', fontWeight: 600 }}>• Tagihan Disembunyikan</span>
+            <span style={{ color: '#52504C', fontWeight: 600 }}>• Tagihan Disembunyikan</span>
           )}
           {filterCategory !== 'all' && (
             <span>Kategori: <strong>{getCategoryById(filterCategory, allCategories).label}</strong></span>

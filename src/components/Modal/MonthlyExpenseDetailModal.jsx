@@ -152,7 +152,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
             type="button"
             onClick={onClose}
             style={{
-              background: '#F3EAD3',
+              background: '#E4DED0',
               border: 'none',
               borderRadius: '50%',
               width: 32,
@@ -201,9 +201,9 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                     borderRadius: 'var(--radius-full)',
                     fontSize: '0.6875rem',
                     fontWeight: 700,
-                    backgroundColor: summary.isHigherThanPrev ? '#FFD0D6' : '#C4F2DA',
-                    color: summary.isHigherThanPrev ? '#C1123A' : '#046C4E',
-                    border: `2px solid ${summary.isHigherThanPrev ? '#111111' : '#111111'}`,
+                    backgroundColor: summary.isHigherThanPrev ? '#E4DED0' : '#FFFFFF',
+                    color: summary.isHigherThanPrev ? '#B81C12' : '#0E0E0E',
+                    border: `2px solid ${summary.isHigherThanPrev ? '#0E0E0E' : '#0E0E0E'}`,
                   }}
                   title={`Bulan sebelumnya: ${formatIDR(summary.prevMonthExpenses)}`}
                 >
@@ -225,7 +225,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
               </div>
               <div>
                 <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Arus Kas Bersih</span>
-                <div className="amount" style={{ fontSize: '0.875rem', fontWeight: 600, color: summary.net >= 0 ? '#046C4E' : '#C1123A' }}>
+                <div className="amount" style={{ fontSize: '0.875rem', fontWeight: 600, color: summary.net >= 0 ? '#0E0E0E' : '#B81C12' }}>
                   {summary.net >= 0 ? `+${formatIDR(summary.net)}` : formatIDR(summary.net)}
                 </div>
               </div>
@@ -275,7 +275,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                                 height: 22,
                                 borderRadius: 'var(--radius-sm)',
                                 backgroundColor: d.colorBg,
-                                border: `2px solid ${d.colorBorder || '#111111'}`,
+                                border: `2px solid ${d.colorBorder || '#0E0E0E'}`,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -297,7 +297,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                           </div>
                         </div>
                         {/* Thin progress indicator */}
-                        <div style={{ height: 4, borderRadius: 2, backgroundColor: '#F3EAD3', overflow: 'hidden' }}>
+                        <div style={{ height: 4, borderRadius: 2, backgroundColor: '#E4DED0', overflow: 'hidden' }}>
                           <div style={{ height: '100%', width: `${percent}%`, backgroundColor: d.fill, borderRadius: 2 }} />
                         </div>
                       </div>
@@ -310,7 +310,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                 style={{
                   textAlign: 'center',
                   padding: '24px 12px',
-                  backgroundColor: '#F3EAD3',
+                  backgroundColor: '#E4DED0',
                   borderRadius: 'var(--radius-md)',
                   color: 'var(--text-muted)',
                   fontSize: '0.8125rem',
@@ -354,7 +354,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
                             height: 26,
                             borderRadius: 'var(--radius-sm)',
                             backgroundColor: cat.colorBg,
-                            border: `2px solid ${cat.colorBorder || '#111111'}`,
+                            border: `2px solid ${cat.colorBorder || '#0E0E0E'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
@@ -395,7 +395,7 @@ const MonthlyExpenseDetailModal = ({ monthData, onClose, onOpenInAnalytics }) =>
               justifyContent: 'center',
               gap: 8,
               padding: '11px 16px',
-              backgroundColor: '#111111',
+              backgroundColor: '#0E0E0E',
               color: '#FFFFFF',
               border: 'none',
               borderRadius: 'var(--radius-md)',

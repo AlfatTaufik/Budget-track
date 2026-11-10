@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight, Wallet } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import { signIn, signUp } from '../../lib/db';
 
 const LoginPage = ({ onLogin }) => {
@@ -56,46 +56,54 @@ const LoginPage = ({ onLogin }) => {
 
   return (
     <div className="auth-page">
-      {/* StudyTracker Minimalist Branding */}
+      {/* Poster wordmark */}
       <motion.div
+        className="auth-poster"
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        style={{ textAlign: 'center', marginBottom: 28 }}
       >
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--block-yellow)',
-            border: '2px solid var(--ink)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 14px',
-            boxShadow: 'var(--shadow-card)',
-            color: 'var(--ink)',
-          }}
-        >
-          <Wallet size={24} strokeWidth={2.2} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+          <div>
+            <div className="kicker">Money tracker</div>
+            <div className="rule" style={{ color: 'var(--red)' }} />
+          </div>
+          <div className="kicker" style={{ textAlign: 'right' }}>
+            Satu dompet.
+            <br />
+            Semua tercatat.
+          </div>
         </div>
-        <h1 style={{ fontSize: '1.75rem', letterSpacing: '0.02em', textTransform: 'uppercase', marginBottom: 3, color: 'var(--text-primary)' }}>
-          Nusa Track
+        <h1 className="auth-wordmark">
+          Nusa
+          <br />
+          <span>Track</span>
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem' }}>
-          Pencatat keuangan pribadi yang simpel & efisien
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 18 }}>
+          <div className="poster-pill">
+            <span className="pill-name">Nusa Track</span>
+            <span className="pill-sub">Dompet / Investasi / Amplop</span>
+          </div>
+          <div
+            aria-hidden="true"
+            style={{
+              flex: 1,
+              height: 30,
+              backgroundImage:
+                'repeating-linear-gradient(90deg, var(--paper) 0 2px, transparent 2px 3px, var(--paper) 3px 6px, transparent 6px 8px, var(--paper) 8px 9px, transparent 9px 12px)',
+            }}
+          />
+        </div>
       </motion.div>
 
-      {/* Card Form (StudyTracker Style) */}
+      {/* Card Form */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.3 }}
         style={{ width: '100%', maxWidth: 360 }}
       >
-        <div className="glass-card" style={{ padding: '20px 18px' }}>
+        <div className="glass-card" style={{ padding: '20px 18px', color: 'var(--ink)', borderTopColor: 'var(--red)' }}>
           {/* Tab Toggle */}
           <div
             style={{
@@ -240,12 +248,12 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    backgroundColor: '#FFD0D6',
-                    border: '2px solid #111111',
+                    backgroundColor: '#E4DED0',
+                    border: '2px solid #0E0E0E',
                     borderRadius: 'var(--radius-md)',
                     padding: '8px 10px',
                     fontSize: '0.75rem',
-                    color: '#9F1239',
+                    color: '#B81C12',
                     marginBottom: 12,
                     fontWeight: 500,
                   }}
@@ -259,12 +267,12 @@ const LoginPage = ({ onLogin }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   style={{
-                    backgroundColor: '#C4F2DA',
-                    border: '2px solid #111111',
+                    backgroundColor: '#FFFFFF',
+                    border: '2px solid #0E0E0E',
                     borderRadius: 'var(--radius-md)',
                     padding: '8px 10px',
                     fontSize: '0.75rem',
-                    color: '#065F46',
+                    color: '#0E0E0E',
                     marginBottom: 12,
                     fontWeight: 500,
                   }}

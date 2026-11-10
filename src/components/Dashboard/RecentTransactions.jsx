@@ -10,7 +10,7 @@ import EditTransactionModal from '../Modal/EditTransactionModal';
 const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) => {
   const isTransfer = tx.type === 'transfer';
   const cat = isTransfer
-    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#4F46E5', colorBg: '#D5DBFF' }
+    ? { id: 'transfer', label: 'Transfer', iconName: 'ArrowLeftRight', color: '#0E0E0E', colorBg: '#D3CEC2' }
     : getCategoryById(tx.category, extraCategories);
   const wallet = getWalletById(tx.wallet);
   const destWallet = isTransfer && tx.toWallet ? getWalletById(tx.toWallet) : null;
@@ -33,7 +33,7 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) 
         alignItems: 'center',
         gap: 12,
         padding: '11px 0',
-        borderBottom: '1px solid #F3EAD3',
+        borderBottom: '1px solid #E4DED0',
         cursor: 'pointer',
         ...style,
       }}
@@ -46,7 +46,7 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) 
           width: 40,
           height: 40,
           borderRadius: 'var(--radius-md)',
-          backgroundColor: cat.colorBg || '#D5DBFF',
+          backgroundColor: cat.colorBg || '#D3CEC2',
           border: `2px solid ${cat.color}35`,
           display: 'flex',
           alignItems: 'center',
@@ -55,7 +55,7 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) 
         }}
       >
         {isTransfer ? (
-          <ArrowLeftRight size={18} color="#4F46E5" />
+          <ArrowLeftRight size={18} color="#0E0E0E" />
         ) : (
           <AppIcon name={cat.iconName} size={18} color={cat.color} />
         )}
@@ -81,12 +81,12 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) 
             <span
               style={{
                 fontSize: '0.6875rem',
-                color: '#4338CA',
+                color: '#0E0E0E',
                 fontWeight: 600,
-                backgroundColor: '#D5DBFF',
+                backgroundColor: '#D3CEC2',
                 padding: '1px 7px',
                 borderRadius: 'var(--radius-full)',
-                border: '2px solid #111111',
+                border: '2px solid #0E0E0E',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 4,
@@ -173,9 +173,9 @@ const TransactionItem = ({ tx, style, extraCategories = [], onDelete, onEdit }) 
                   width: 30,
                   height: 30,
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#FFD0D6',
-                  border: '2px solid #111111',
-                  color: '#C1123A',
+                  backgroundColor: '#E4DED0',
+                  border: '2px solid #0E0E0E',
+                  color: '#B81C12',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',

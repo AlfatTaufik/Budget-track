@@ -14,7 +14,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
   const isOver = bp.isOver;
   const isWarning = bp.isWarning;
 
-  const barColor = isOver ? '#C1123A' : isWarning ? '#A85800' : '#046C4E';
+  const barColor = isOver ? '#B81C12' : isWarning ? '#7A746A' : '#0E0E0E';
   const statusBadge = isOver ? (
     <span
       style={{
@@ -23,9 +23,9 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
         gap: 3,
         padding: '2px 8px',
         borderRadius: 'var(--radius-full)',
-        backgroundColor: '#FFD0D6',
-        border: '2px solid #111111',
-        color: '#C1123A',
+        backgroundColor: '#E4DED0',
+        border: '2px solid #0E0E0E',
+        color: '#B81C12',
         fontSize: '0.625rem',
         fontWeight: 700,
       }}
@@ -40,9 +40,9 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
         gap: 3,
         padding: '2px 8px',
         borderRadius: 'var(--radius-full)',
-        backgroundColor: '#FFE89A',
-        border: '2px solid #111111',
-        color: '#A85800',
+        backgroundColor: '#D3CEC2',
+        border: '2px solid #0E0E0E',
+        color: '#7A746A',
         fontSize: '0.625rem',
         fontWeight: 700,
       }}
@@ -57,9 +57,9 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
         gap: 3,
         padding: '2px 8px',
         borderRadius: 'var(--radius-full)',
-        backgroundColor: '#C4F2DA',
-        border: '2px solid #111111',
-        color: '#046C4E',
+        backgroundColor: '#FFFFFF',
+        border: '2px solid #0E0E0E',
+        color: '#0E0E0E',
         fontSize: '0.625rem',
         fontWeight: 700,
       }}
@@ -75,7 +75,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
       style={{
         padding: '12px 14px',
         backgroundColor: '#FFFFFF',
-        border: `2px solid ${isOver ? '#111111' : 'var(--border-subtle)'}`,
+        border: `2px solid ${isOver ? '#0E0E0E' : 'var(--border-subtle)'}`,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -85,7 +85,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
             width: 36,
             height: 36,
             borderRadius: 'var(--radius-sm)',
-            backgroundColor: cat.colorBg || '#F3EAD3',
+            backgroundColor: cat.colorBg || '#E4DED0',
             border: `2px solid ${cat.colorBorder || 'var(--border-subtle)'}`,
             display: 'flex',
             alignItems: 'center',
@@ -169,7 +169,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
               <button
                 onClick={() => onSave(bp.category)}
                 style={{
-                  backgroundColor: '#111111',
+                  backgroundColor: '#0E0E0E',
                   border: 'none',
                   borderRadius: 'var(--radius-sm)',
                   padding: '6px 10px',
@@ -234,7 +234,7 @@ const EnvelopeCard = ({ bp, onEdit, isEditing, editValue, onEditChange, onSave, 
 const GoalCard = ({ goal, onAdd, onDelete }) => {
   const pct = Math.min((goal.savedAmount / goal.targetAmount) * 100, 100);
   const remaining = goal.targetAmount - goal.savedAmount;
-  const barColor = pct >= 100 ? '#046C4E' : goal.color;
+  const barColor = pct >= 100 ? '#0E0E0E' : goal.color;
 
   return (
     <motion.div
@@ -253,7 +253,7 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
               width: 34,
               height: 34,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: goal.colorBg || '#F3EAD3',
+              backgroundColor: goal.colorBg || '#E4DED0',
               border: `2px solid ${goal.colorBorder || 'var(--border-subtle)'}`,
               display: 'flex',
               alignItems: 'center',
@@ -298,14 +298,14 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
                 width: 28,
                 height: 28,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#C4F2DA',
-                border: '2px solid #111111',
+                backgroundColor: '#FFFFFF',
+                border: '2px solid #0E0E0E',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Check size={14} color="#046C4E" />
+              <Check size={14} color="#0E0E0E" />
             </div>
           )}
           <button
@@ -314,9 +314,9 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
               width: 28,
               height: 28,
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: '#FFD0D6',
-              border: '2px solid #111111',
-              color: '#C1123A',
+              backgroundColor: '#E4DED0',
+              border: '2px solid #0E0E0E',
+              color: '#B81C12',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -336,7 +336,7 @@ const GoalCard = ({ goal, onAdd, onDelete }) => {
         </div>
         <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
           {pct >= 100 ? (
-            <span style={{ color: '#046C4E', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ color: '#0E0E0E', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
               <Sparkles size={11} /> Tercapai!
             </span>
           ) : (
@@ -528,8 +528,8 @@ const BudgetsPage = () => {
                   className="amount"
                   style={{
                     fontSize: '1.625rem',
-                    color: totalRemaining >= 0 ? 'var(--text-primary)' : '#C1123A',
-                    letterSpacing: '-0.03em',
+                    color: totalRemaining >= 0 ? 'var(--text-primary)' : '#B81C12',
+                    letterSpacing: '0.01em',
                     marginTop: 2,
                   }}
                 >
@@ -554,22 +554,22 @@ const BudgetsPage = () => {
                 initial={{ width: 0 }}
                 animate={{ width: `${overallPercentage}%` }}
                 transition={{ duration: 0.8 }}
-                style={{ backgroundColor: totalRemaining < 0 ? '#C1123A' : overallPercentage > 80 ? '#A85800' : '#111111' }}
+                style={{ backgroundColor: totalRemaining < 0 ? '#B81C12' : overallPercentage > 80 ? '#7A746A' : '#0E0E0E' }}
               />
             </div>
 
             {/* Status Breakdown Chips */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
-              <span style={{ fontSize: '0.6875rem', color: '#065F46', backgroundColor: '#C4F2DA', border: '2px solid #111111', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
+              <span style={{ fontSize: '0.6875rem', color: '#0E0E0E', backgroundColor: '#FFFFFF', border: '2px solid #0E0E0E', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
                 🟢 {safeCount} Aman
               </span>
               {warningCount > 0 && (
-                <span style={{ fontSize: '0.6875rem', color: '#92400E', backgroundColor: '#FFE89A', border: '2px solid #111111', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
+                <span style={{ fontSize: '0.6875rem', color: '#0E0E0E', backgroundColor: '#D3CEC2', border: '2px solid #0E0E0E', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 600 }}>
                   🟡 {warningCount} Waspada
                 </span>
               )}
               {overCount > 0 && (
-                <span style={{ fontSize: '0.6875rem', color: '#9F1239', backgroundColor: '#FFD0D6', border: '2px solid #111111', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
+                <span style={{ fontSize: '0.6875rem', color: '#B81C12', backgroundColor: '#E4DED0', border: '2px solid #0E0E0E', padding: '2px 8px', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
                   🔴 {overCount} Overbudget
                 </span>
               )}
@@ -584,7 +584,7 @@ const BudgetsPage = () => {
                   width: 24,
                   height: 24,
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#111111',
+                  backgroundColor: '#0E0E0E',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -705,7 +705,7 @@ const BudgetsPage = () => {
                   width: 24,
                   height: 24,
                   borderRadius: 'var(--radius-sm)',
-                  backgroundColor: '#111111',
+                  backgroundColor: '#0E0E0E',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

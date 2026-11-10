@@ -70,7 +70,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 width: 26,
                 height: 26,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#111111',
+                backgroundColor: '#0E0E0E',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -107,10 +107,10 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 flex: 1,
                 padding: '7px 0',
                 borderRadius: 'var(--radius-sm)',
-                border: type === 'expense' ? '2px solid #111111' : '2px solid transparent',
+                border: type === 'expense' ? '2px solid #0E0E0E' : '2px solid transparent',
                 cursor: 'pointer',
-                backgroundColor: type === 'expense' ? '#FFD0D6' : 'transparent',
-                color: type === 'expense' ? '#9F1239' : 'var(--text-secondary)',
+                backgroundColor: type === 'expense' ? '#E4DED0' : 'transparent',
+                color: type === 'expense' ? '#B81C12' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: '0.75rem',
                 display: 'flex',
@@ -120,7 +120,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 transition: 'all 0.15s',
               }}
             >
-              <TrendingDown size={13} color="#C1123A" /> Pengeluaran
+              <TrendingDown size={13} color="#B81C12" /> Pengeluaran
             </button>
             <button
               type="button"
@@ -129,10 +129,10 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 flex: 1,
                 padding: '7px 0',
                 borderRadius: 'var(--radius-sm)',
-                border: type === 'income' ? '2px solid #111111' : '2px solid transparent',
+                border: type === 'income' ? '2px solid #0E0E0E' : '2px solid transparent',
                 cursor: 'pointer',
-                backgroundColor: type === 'income' ? '#C4F2DA' : 'transparent',
-                color: type === 'income' ? '#065F46' : 'var(--text-secondary)',
+                backgroundColor: type === 'income' ? '#FFFFFF' : 'transparent',
+                color: type === 'income' ? '#0E0E0E' : 'var(--text-secondary)',
                 fontWeight: 600,
                 fontSize: '0.75rem',
                 display: 'flex',
@@ -142,7 +142,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
                 transition: 'all 0.15s',
               }}
             >
-              <TrendingUp size={13} color="#046C4E" /> Pemasukan
+              <TrendingUp size={13} color="#0E0E0E" /> Pemasukan
             </button>
           </div>
 
@@ -170,7 +170,7 @@ const AddCategoryModal = ({ onClose, defaultType = 'expense', onCreated }) => {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(6, 1fr)',
+                gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
                 gap: 6,
                 maxHeight: 140,
                 overflowY: 'auto',

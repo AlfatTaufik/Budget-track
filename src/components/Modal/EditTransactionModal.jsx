@@ -142,11 +142,11 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 padding: '2px 8px',
                 borderRadius: 'var(--radius-full)',
                 backgroundColor:
-                  type === 'transfer' ? '#D5DBFF' : type === 'income' ? '#C4F2DA' : '#FFD0D6',
+                  type === 'transfer' ? '#D3CEC2' : type === 'income' ? '#FFFFFF' : '#E4DED0',
                 color:
-                  type === 'transfer' ? '#4F46E5' : type === 'income' ? '#046C4E' : '#C1123A',
+                  type === 'transfer' ? '#0E0E0E' : type === 'income' ? '#0E0E0E' : '#B81C12',
                 border: `2px solid ${
-                  type === 'transfer' ? '#111111' : type === 'income' ? '#111111' : '#111111'
+                  type === 'transfer' ? '#0E0E0E' : type === 'income' ? '#0E0E0E' : '#0E0E0E'
                 }`,
               }}
             >
@@ -168,9 +168,9 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 gap: 6,
                 padding: '8px 12px',
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: '#FFD0D6',
-                border: '2px solid #111111',
-                color: '#C1123A',
+                backgroundColor: '#E4DED0',
+                border: '2px solid #0E0E0E',
+                color: '#B81C12',
                 fontSize: '0.75rem',
                 fontWeight: 500,
               }}
@@ -195,9 +195,9 @@ const EditTransactionModal = ({ tx, onClose }) => {
               }}
             >
               {[
-                { id: 'expense', label: 'Pengeluaran', icon: TrendingDown, color: '#C1123A', bg: '#FFD0D6', border: '#111111' },
-                { id: 'income', label: 'Pemasukan', icon: TrendingUp, color: '#046C4E', bg: '#C4F2DA', border: '#111111' },
-                { id: 'transfer', label: 'Pindah Dana', icon: ArrowLeftRight, color: '#4F46E5', bg: '#D5DBFF', border: '#111111' },
+                { id: 'expense', label: 'Pengeluaran', icon: TrendingDown, color: '#B81C12', bg: '#E4DED0', border: '#0E0E0E' },
+                { id: 'income', label: 'Pemasukan', icon: TrendingUp, color: '#0E0E0E', bg: '#FFFFFF', border: '#0E0E0E' },
+                { id: 'transfer', label: 'Pindah Dana', icon: ArrowLeftRight, color: '#0E0E0E', bg: '#D3CEC2', border: '#0E0E0E' },
               ].filter((t) => t.id !== 'transfer' || tx.type === 'transfer').map((t) => {
                 const isActive = type === t.id;
                 const Icon = t.icon;
@@ -254,7 +254,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                   left: 14,
                   fontSize: '1.125rem',
                   fontWeight: 700,
-                  color: type === 'income' ? '#046C4E' : type === 'expense' ? '#C1123A' : '#4F46E5',
+                  color: type === 'income' ? '#0E0E0E' : type === 'expense' ? '#B81C12' : '#0E0E0E',
                 }}
               >
                 Rp
@@ -276,7 +276,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                   fontWeight: 700,
                   fontFamily: 'Inter, monospace',
                   height: 48,
-                  borderColor: parsedAmount > 0 ? (type === 'income' ? '#046C4E' : type === 'expense' ? '#C1123A' : '#4F46E5') : undefined,
+                  borderColor: parsedAmount > 0 ? (type === 'income' ? '#0E0E0E' : type === 'expense' ? '#B81C12' : '#0E0E0E') : undefined,
                 }}
                 autoFocus
               />
@@ -334,7 +334,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
               <div
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
                   gap: 6,
                   maxHeight: 150,
                   overflowY: 'auto',
@@ -461,7 +461,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
                 <button
                   type="submit"
                   style={{
-                    backgroundColor: '#111111',
+                    backgroundColor: '#0E0E0E',
                     color: '#FFFFFF',
                     border: 'none',
                     borderRadius: 'var(--radius-sm)',
@@ -539,7 +539,7 @@ const EditTransactionModal = ({ tx, onClose }) => {
               padding: '11px',
               borderRadius: 'var(--radius-md)',
               border: 'none',
-              backgroundColor: '#111111',
+              backgroundColor: '#0E0E0E',
               color: '#FFFFFF',
               fontSize: '0.875rem',
               fontWeight: 700,

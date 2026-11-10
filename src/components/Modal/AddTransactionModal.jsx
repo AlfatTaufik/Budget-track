@@ -238,10 +238,10 @@ const AddTransactionModal = ({ onClose }) => {
                         flex: 1,
                         padding: '7px 0',
                         borderRadius: 'var(--radius-sm)',
-                        border: type === 'expense' ? '2px solid #111111' : '2px solid transparent',
+                        border: type === 'expense' ? '2px solid #0E0E0E' : '2px solid transparent',
                         cursor: 'pointer',
-                        backgroundColor: type === 'expense' ? '#FFD0D6' : 'transparent',
-                        color: type === 'expense' ? '#9F1239' : 'var(--text-secondary)',
+                        backgroundColor: type === 'expense' ? '#E4DED0' : 'transparent',
+                        color: type === 'expense' ? '#B81C12' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         display: 'flex',
@@ -251,7 +251,7 @@ const AddTransactionModal = ({ onClose }) => {
                         transition: 'all 0.15s',
                       }}
                     >
-                      <TrendingDown size={13} color="#C1123A" /> Keluar
+                      <TrendingDown size={13} color="#B81C12" /> Keluar
                     </button>
                     <button
                       className="tab-btn"
@@ -260,10 +260,10 @@ const AddTransactionModal = ({ onClose }) => {
                         flex: 1,
                         padding: '7px 0',
                         borderRadius: 'var(--radius-sm)',
-                        border: type === 'income' ? '2px solid #111111' : '2px solid transparent',
+                        border: type === 'income' ? '2px solid #0E0E0E' : '2px solid transparent',
                         cursor: 'pointer',
-                        backgroundColor: type === 'income' ? '#C4F2DA' : 'transparent',
-                        color: type === 'income' ? '#065F46' : 'var(--text-secondary)',
+                        backgroundColor: type === 'income' ? '#FFFFFF' : 'transparent',
+                        color: type === 'income' ? '#0E0E0E' : 'var(--text-secondary)',
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         display: 'flex',
@@ -273,7 +273,7 @@ const AddTransactionModal = ({ onClose }) => {
                         transition: 'all 0.15s',
                       }}
                     >
-                      <TrendingUp size={13} color="#046C4E" /> Masuk
+                      <TrendingUp size={13} color="#0E0E0E" /> Masuk
                     </button>
                   </div>
                 </div>
@@ -288,7 +288,7 @@ const AddTransactionModal = ({ onClose }) => {
                     style={{
                       fontSize: amount ? '2.5rem' : '1.75rem',
                       color: amount ? 'var(--text-primary)' : 'var(--text-muted)',
-                      letterSpacing: '-0.04em',
+                      letterSpacing: '0.01em',
                       minHeight: 52,
                       display: 'flex',
                       alignItems: 'center',
@@ -310,7 +310,7 @@ const AddTransactionModal = ({ onClose }) => {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                     gap: 6,
                     padding: '0 18px 12px',
                   }}
@@ -326,11 +326,11 @@ const AddTransactionModal = ({ onClose }) => {
                           backgroundColor: isPressed
                             ? 'var(--brand-primary)'
                             : key === '⌫'
-                            ? '#FFD0D6'
+                            ? '#E4DED0'
                             : '#FFFFFF',
-                          border: isPressed ? '2px solid #111111' : '1px solid var(--border-subtle)',
+                          border: isPressed ? '2px solid #0E0E0E' : '1px solid var(--border-subtle)',
                           borderRadius: 'var(--radius-md)',
-                          color: isPressed ? '#FFFFFF' : key === '⌫' ? '#C1123A' : 'var(--text-primary)',
+                          color: isPressed ? '#FFFFFF' : key === '⌫' ? '#B81C12' : 'var(--text-primary)',
                           fontSize: '1.125rem',
                           fontWeight: 600,
                           cursor: 'pointer',
@@ -438,7 +438,7 @@ const AddTransactionModal = ({ onClose }) => {
                     <span
                       className="amount"
                       style={{
-                        color: type === 'expense' ? '#C1123A' : '#046C4E',
+                        color: type === 'expense' ? '#B81C12' : '#0E0E0E',
                         fontSize: '1rem',
                         fontWeight: 700,
                       }}
@@ -472,7 +472,7 @@ const AddTransactionModal = ({ onClose }) => {
                         </button>
                       </div>
 
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6, maxHeight: 150, overflowY: 'auto', padding: '2px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 6, maxHeight: 150, overflowY: 'auto', padding: '2px' }}>
                         {categories.map((cat) => {
                           const isSelected = category === cat.id;
                           return (
@@ -558,8 +558,8 @@ const AddTransactionModal = ({ onClose }) => {
                             marginTop: 8,
                             padding: '8px 10px',
                             borderRadius: 'var(--radius-sm)',
-                            backgroundColor: willOverbudget ? '#FFD0D6' : env.isWarning ? '#FFE89A' : '#C4F2DA',
-                            border: `2px solid ${willOverbudget ? '#111111' : env.isWarning ? '#111111' : '#111111'}`,
+                            backgroundColor: willOverbudget ? '#E4DED0' : env.isWarning ? '#D3CEC2' : '#FFFFFF',
+                            border: `2px solid ${willOverbudget ? '#0E0E0E' : env.isWarning ? '#0E0E0E' : '#0E0E0E'}`,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
@@ -567,18 +567,18 @@ const AddTransactionModal = ({ onClose }) => {
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <Mail size={13} color={willOverbudget ? '#C1123A' : '#046C4E'} />
+                            <Mail size={13} color={willOverbudget ? '#B81C12' : '#0E0E0E'} />
                             <span style={{ color: 'var(--text-secondary)' }}>Sisa Amplop:</span>
-                            <strong style={{ color: env.remaining < 0 ? '#C1123A' : 'var(--text-primary)' }}>
+                            <strong style={{ color: env.remaining < 0 ? '#B81C12' : 'var(--text-primary)' }}>
                               {formatIDR(env.remaining)}
                             </strong>
                           </div>
                           {willOverbudget ? (
-                            <span style={{ color: '#C1123A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <span style={{ color: '#B81C12', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
                               <AlertTriangle size={11} /> Minus {formatCompact(Math.abs(remainingAfterTx))}
                             </span>
                           ) : (
-                            <span style={{ color: '#065F46', fontWeight: 600 }}>
+                            <span style={{ color: '#0E0E0E', fontWeight: 600 }}>
                               Sisa nanti: {formatCompact(remainingAfterTx)}
                             </span>
                           )}

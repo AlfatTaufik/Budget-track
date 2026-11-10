@@ -18,13 +18,13 @@ const PRESETS = [
 ];
 
 const COLORS = [
-  { hex: '#046C4E', bg: '#C4F2DA', border: '#111111', label: 'Emerald' },
-  { hex: '#4F46E5', bg: '#D5DBFF', border: '#111111', label: 'Indigo' },
-  { hex: '#0369A1', bg: '#BFE4FF', border: '#111111', label: 'Sky' },
-  { hex: '#A85800', bg: '#FFE89A', border: '#111111', label: 'Amber' },
-  { hex: '#C1123A', bg: '#FFD0D6', border: '#111111', label: 'Rose' },
-  { hex: '#7E22CE', bg: '#E3D1FF', border: '#111111', label: 'Purple' },
-  { hex: '#DB2777', bg: '#FFC7F0', border: '#111111', label: 'Pink' },
+  { hex: '#0E0E0E', bg: '#FFFFFF', border: '#0E0E0E', label: 'Emerald' },
+  { hex: '#0E0E0E', bg: '#D3CEC2', border: '#0E0E0E', label: 'Indigo' },
+  { hex: '#3A3A38', bg: '#D3CEC2', border: '#0E0E0E', label: 'Sky' },
+  { hex: '#7A746A', bg: '#D3CEC2', border: '#0E0E0E', label: 'Amber' },
+  { hex: '#B81C12', bg: '#E4DED0', border: '#0E0E0E', label: 'Rose' },
+  { hex: '#52504C', bg: '#D3CEC2', border: '#0E0E0E', label: 'Purple' },
+  { hex: '#B81C12', bg: '#E4DED0', border: '#0E0E0E', label: 'Pink' },
 ];
 
 const AddGoalModal = ({ onClose }) => {
@@ -149,7 +149,7 @@ const AddGoalModal = ({ onClose }) => {
             <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
               Pilih Ikon
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 6 }}>
               {PRESETS.map((preset) => {
                 const isSelected = selectedIcon === preset.iconName;
                 return (

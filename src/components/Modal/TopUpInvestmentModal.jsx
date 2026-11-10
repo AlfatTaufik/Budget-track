@@ -64,15 +64,15 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
                 width: 30,
                 height: 30,
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: inv.colorBg || '#FFE89A',
-                color: inv.color || '#A85800',
+                backgroundColor: inv.colorBg || '#D3CEC2',
+                color: inv.color || '#7A746A',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 border: `2px solid ${inv.colorBorder || 'var(--border-subtle)'}`,
               }}
             >
-              <AppIcon name={inv.iconName || 'TrendingUp'} size={15} color={inv.color || '#A85800'} />
+              <AppIcon name={inv.iconName || 'TrendingUp'} size={15} color={inv.color || '#7A746A'} />
             </div>
             <div>
               <h2 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -153,7 +153,7 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
               }}
             >
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Total Portofolio Nanti:</span>
-              <strong style={{ fontSize: '0.9375rem', color: '#046C4E' }}>
+              <strong style={{ fontSize: '0.9375rem', color: '#0E0E0E' }}>
                 {formatIDR(newTotal)}
               </strong>
             </div>
@@ -216,11 +216,11 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
             <div
               style={{
                 padding: '10px 12px',
-                backgroundColor: '#C4F2DA',
-                border: '2px solid #111111',
+                backgroundColor: '#FFFFFF',
+                border: '2px solid #0E0E0E',
                 borderRadius: 'var(--radius-md)',
                 fontSize: '0.75rem',
-                color: '#166534',
+                color: '#0E0E0E',
                 lineHeight: 1.4,
                 marginBottom: 20,
               }}
@@ -250,8 +250,8 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
             style={{
               width: '100%',
               padding: '12px',
-              backgroundColor: '#046C4E',
-              borderColor: '#046C4E',
+              backgroundColor: '#0E0E0E',
+              borderColor: '#0E0E0E',
               fontSize: '0.875rem',
               fontWeight: 600,
               display: 'flex',

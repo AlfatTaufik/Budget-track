@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, ArrowUpDown, PieChart, Mail, Wallet } from 'lucide-react';
+import { LayoutDashboard, ArrowUpDown, PieChart, Mail } from 'lucide-react';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Beranda', icon: LayoutDashboard },
@@ -8,18 +8,21 @@ const NAV_ITEMS = [
   { id: 'budgets', label: 'Amplop', icon: Mail },
 ];
 
-// Bottom bar on phones; the same element becomes the sidebar on desktop (see App.css)
+// Black bar on phones; the same element becomes the poster sidebar on desktop (see App.css)
 const BottomNav = ({ activePage, onNavigate }) => {
   return (
     <nav className="bottom-nav">
       <div className="nav-brand">
-        <div className="brand-mark">
-          <Wallet size={17} strokeWidth={2.5} />
+        <div className="kicker">Money tracker</div>
+        <div className="rule" style={{ color: 'var(--red)' }} />
+        <div className="nav-wordmark">
+          Nusa
+          <br />
+          <span>Track</span>
         </div>
-        <span className="brand-name">Nusa Track</span>
       </div>
 
-      {NAV_ITEMS.map((item) => {
+      {NAV_ITEMS.map((item, index) => {
         const Icon = item.icon;
         const isActive = activePage === item.id;
         return (
@@ -30,18 +33,24 @@ const BottomNav = ({ activePage, onNavigate }) => {
             aria-label={item.label}
             aria-current={isActive ? 'page' : undefined}
           >
+            <span className="nav-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
             <div className="nav-icon-wrap">
               <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
             </div>
-            <span>{item.label}</span>
+            <span className="nav-label">{item.label}</span>
           </button>
         );
       })}
 
       <div className="nav-foot">
-        Satu dompet.
-        <br />
-        Semua tercatat.
+        <div className="poster-pill">
+          <span className="pill-name">Nusa Track</span>
+          <span className="pill-sub">Dompet / Investasi / Amplop</span>
+        </div>
+        <div className="barcode" aria-hidden="true" />
+        <div className="kicker" style={{ fontSize: '0.5625rem' }}>
+          Satu dompet. Semua tercatat.
+        </div>
       </div>
     </nav>
   );

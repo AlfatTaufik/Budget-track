@@ -30,7 +30,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             </span>
           </div>
         ))}
-        <div style={{ fontSize: '0.625rem', color: '#6366F1', marginTop: 4, fontWeight: 600 }}>
+        <div style={{ fontSize: '0.625rem', color: '#52504C', marginTop: 4, fontWeight: 600 }}>
           Ketuk bar untuk lihat rincian ➔
         </div>
       </div>
@@ -81,11 +81,11 @@ const MonthlyChart = ({ onNavigate }) => {
             </span>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#065F46', fontWeight: 600, backgroundColor: '#C4F2DA', padding: '2px 6px', borderRadius: 4 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#046C4E' }} /> Masuk
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#0E0E0E', fontWeight: 600, backgroundColor: '#FFFFFF', padding: '2px 6px', borderRadius: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#0E0E0E' }} /> Masuk
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#9F1239', fontWeight: 600, backgroundColor: '#FFD0D6', padding: '2px 6px', borderRadius: 4 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#C1123A' }} /> Keluar
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: '#B81C12', fontWeight: 600, backgroundColor: '#E4DED0', padding: '2px 6px', borderRadius: 4 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#B81C12' }} /> Keluar
             </div>
           </div>
         </div>
@@ -103,7 +103,7 @@ const MonthlyChart = ({ onNavigate }) => {
                 }
               }}
             >
-              <CartesianGrid vertical={false} stroke="#111111" strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} stroke="#0E0E0E" strokeDasharray="3 3" />
               <XAxis
                 dataKey="name"
                 axisLine={false}
@@ -121,14 +121,14 @@ const MonthlyChart = ({ onNavigate }) => {
               {/* StudyTracker Emerald & Rose solid bars with click support */}
               <Bar
                 dataKey="income"
-                fill="#046C4E"
+                fill="#0E0E0E"
                 radius={[3, 3, 0, 0]}
                 maxBarSize={15}
                 onClick={(entry) => handleBarClick(entry)}
               />
               <Bar
                 dataKey="expense"
-                fill="#C1123A"
+                fill="#B81C12"
                 radius={[3, 3, 0, 0]}
                 maxBarSize={15}
                 onClick={(entry) => handleBarClick(entry)}
@@ -187,7 +187,7 @@ const MonthlyChart = ({ onNavigate }) => {
                     padding: '4px 9px',
                     borderRadius: 'var(--radius-full)',
                     border: '2px solid var(--border-subtle)',
-                    backgroundColor: isCurrent ? '#111111' : '#FFFFFF',
+                    backgroundColor: isCurrent ? '#0E0E0E' : '#FFFFFF',
                     color: isCurrent ? '#FFFFFF' : 'var(--text-secondary)',
                     fontSize: '0.6875rem',
                     fontWeight: 600,

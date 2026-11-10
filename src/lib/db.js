@@ -207,9 +207,9 @@ export const insertCategory = async (cat, userId) => {
       type: cat.type || 'expense',
       label: cat.label,
       icon: cat.iconName || 'Tag',
-      color: cat.color || '#4F46E5',
-      color_bg: cat.colorBg || '#EEF2FF',
-      color_border: cat.colorBorder || '#C7D2FE',
+      color: cat.color || '#0E0E0E',
+      color_bg: cat.colorBg || '#E4DED0',
+      color_border: cat.colorBorder || '#0E0E0E',
     }], { onConflict: 'id' })
     .select()
     .single();

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, ChevronDown, Wallet, Trash2 } from 'lucide-react';
+import { LogOut, ChevronDown, Trash2 } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -10,6 +10,8 @@ const PAGE_TITLES = {
   budgets: 'Amplop & Tabungan',
 };
 
+const PAGE_NUMBERS = { dashboard: '01', transactions: '02', analytics: '03', budgets: '04' };
+
 const Header = ({ activePage }) => {
   const user = useStore((s) => s.user);
   const logout = useStore((s) => s.logout);
@@ -19,30 +21,22 @@ const Header = ({ activePage }) => {
   const email = user?.email || '';
   const initials = email.slice(0, 2).toUpperCase();
   const firstName = email.split('@')[0];
+  const today = new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date());
 
   return (
     <>
       <header className="app-header">
-        {activePage === 'dashboard' ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <div className="brand-mark header-brand">
-              <Wallet size={17} strokeWidth={2.5} />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.2 }}>
-                Selamat datang,
-              </div>
-              <div
-                className="logo"
-                style={{ fontSize: '1rem', lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-              >
-                {firstName}
-              </div>
-            </div>
+        <div style={{ minWidth: 0 }}>
+          <div className="kicker" style={{ marginBottom: 4 }}>
+            {activePage === 'dashboard' ? 'Selamat datang' : `No.${PAGE_NUMBERS[activePage]} — Nusa Track`}
           </div>
-        ) : (
-          <h2 style={{ fontSize: '1.25rem' }}>{PAGE_TITLES[activePage]}</h2>
-        )}
+          <div className="header-title">{activePage === 'dashboard' ? firstName : PAGE_TITLES[activePage]}</div>
+        </div>
+
+        <div className="header-meta kicker" style={{ marginLeft: 'auto' }}>
+          {today}
+          <div className="rule" style={{ marginLeft: 'auto', color: 'var(--red)' }} />
+        </div>
 
         {/* User Avatar + Menu */}
         <div style={{ position: 'relative' }}>
@@ -52,10 +46,8 @@ const Header = ({ activePage }) => {
               display: 'flex',
               alignItems: 'center',
               gap: 6,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: 'transparent',
               border: '2px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-sm)',
-              boxShadow: 'var(--shadow-xs)',
               padding: '3px 8px 3px 3px',
               cursor: 'pointer',
               flexShrink: 0,
@@ -66,14 +58,13 @@ const Header = ({ activePage }) => {
               style={{
                 width: 26,
                 height: 26,
-                backgroundColor: 'var(--block-pink)',
-                border: '2px solid var(--ink)',
+                backgroundColor: 'var(--red)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--ink)',
+                color: '#FFFFFF',
                 fontFamily: 'var(--font-display)',
-                fontSize: '0.625rem',
+                fontSize: '0.8125rem',
                 fontWeight: 700,
               }}
             >
@@ -104,9 +95,8 @@ const Header = ({ activePage }) => {
                     position: 'absolute',
                     right: 0,
                     top: 'calc(100% + 6px)',
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: 'var(--paper-light)',
                     border: '2px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-md)',
                     padding: '6px',
                     minWidth: 180,
                     boxShadow: 'var(--shadow-lg)',
@@ -182,12 +172,12 @@ const Header = ({ activePage }) => {
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      color: '#C1123A',
+                      color: '#B81C12',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       transition: 'background 0.15s',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FFD0D6')}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#E4DED0')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <LogOut size={13} />

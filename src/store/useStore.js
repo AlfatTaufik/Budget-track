@@ -37,6 +37,11 @@ const withInvestmentStyle = (inv) => {
   return { ...inv, iconName: style.icon, color: style.color, colorBg: style.bg, colorBorder: style.border };
 };
 
+const withBuiltIns = (stored, builtIns) => [
+  ...builtIns,
+  ...(stored || []).filter((c) => !builtIns.some((b) => b.id === c.id)),
+];
+
 // Dedupe concurrent loads (getSession + onAuthStateChange both fire on startup)
 const loadsInFlight = new Map();
 
@@ -182,9 +187,9 @@ const useStore = create(
                 label: c.label,
                 type: c.type || 'expense',
                 iconName: c.iconName || c.icon || 'Tag',
-                color: c.color || '#4F46E5',
-                colorBg: c.colorBg || c.color_bg || '#D5DBFF',
-                colorBorder: c.colorBorder || c.color_border || '#111111',
+                color: c.color || '#0E0E0E',
+                colorBg: c.colorBg || c.color_bg || '#E4DED0',
+                colorBorder: c.colorBorder || c.color_border || '#0E0E0E',
               });
             }
           });
@@ -233,7 +238,7 @@ const useStore = create(
             targetAmount: parseFloat(g.target_amount),
             savedAmount: parseFloat(g.saved_amount),
             iconName: g.icon || 'Target',
-            color: g.color || '#4F46E5',
+            color: g.color || '#0E0E0E',
           }));
 
           let formattedInvestments = (investments || []).map((inv) =>
@@ -527,7 +532,7 @@ const useStore = create(
               icon: goalData.iconName || 'Target',
               target_amount: goalData.targetAmount,
               saved_amount: goalData.savedAmount || 0,
-              color: goalData.color || '#4F46E5',
+              color: goalData.color || '#0E0E0E',
               deadline: goalData.deadline || null,
             }, user.id);
 
@@ -789,9 +794,9 @@ const useStore = create(
           label: newCat.label,
           type: newCat.type || 'expense',
           iconName: newCat.iconName || 'Tag',
-          color: newCat.color || '#4F46E5',
-          colorBg: newCat.colorBg || '#D5DBFF',
-          colorBorder: newCat.colorBorder || '#111111',
+          color: newCat.color || '#0E0E0E',
+          colorBg: newCat.colorBg || '#E4DED0',
+          colorBorder: newCat.colorBorder || '#0E0E0E',
         };
 
         set((state) => {
@@ -1225,6 +1230,13 @@ const useStore = create(
       version: 8,
       migrate: () => ({
         // On version upgrade, clear any persisted finance data
+      }),
+      // Built-in categories always come from code, so palette changes reach stored sessions
+      merge: (persisted, current) => ({
+        ...current,
+        ...persisted,
+        expenseCategories: withBuiltIns(persisted?.expenseCategories, EXPENSE_CATEGORIES),
+        incomeCategories: withBuiltIns(persisted?.incomeCategories, INCOME_CATEGORIES),
       }),
       partialize: (state) => ({
         user: state.user,

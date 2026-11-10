@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, TrendingUp, TrendingDown, Pencil, Check, X, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Pencil, Check, X, ArrowRight } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { formatIDR } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
 
 const MASK = '••••••';
+const digits = (value) => formatIDR(value).replace(/^Rp\s?/, '');
 
 const HeroCard = ({ onNavigate }) => {
   const walletBalance = useStore((s) => s.walletBalance) || 0;
@@ -26,9 +27,9 @@ const HeroCard = ({ onNavigate }) => {
   const show = (value) => (balanceVisible ? formatIDR(value) : MASK);
 
   const composition = [
-    { id: 'wallet', label: 'Dompet', hint: 'bisa dipakai', value: walletBalance, color: 'var(--block-yellow)' },
-    { id: 'invest', label: 'Investasi', hint: 'tidak dipakai belanja', value: totalInvestments, color: 'var(--block-mint)' },
-    { id: 'goals', label: 'Tabungan', hint: 'kantong target', value: totalGoals, color: 'var(--block-blue)' },
+    { id: 'wallet', label: 'Dompet', hint: 'bisa dipakai', value: walletBalance, color: 'var(--ink)' },
+    { id: 'invest', label: 'Investasi', hint: 'tidak dipakai belanja', value: totalInvestments, color: 'var(--paper-light)' },
+    { id: 'goals', label: 'Tabungan', hint: 'kantong target', value: totalGoals, color: 'var(--concrete)' },
   ].filter((part) => part.id !== 'goals' || part.value > 0);
 
   const startEdit = () => {
@@ -51,15 +52,12 @@ const HeroCard = ({ onNavigate }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
     >
-      {/* The one wallet: money that can actually be spent */}
-      <section
-        className="block hero-wallet"
-        style={{ backgroundColor: 'var(--block-yellow)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14, boxShadow: 'var(--shadow-lg)' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <span className="tag">Dompet</span>
-            <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>bisa dipakai</span>
+      {/* 01: the one wallet, money that can actually be spent */}
+      <section className="poster poster-ink hero-wallet">
+        <div className="poster-top">
+          <div>
+            <div className="kicker">01 — Dompet</div>
+            <div className="rule" style={{ color: 'var(--red)' }} />
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
@@ -69,7 +67,7 @@ const HeroCard = ({ onNavigate }) => {
               aria-label={editing ? 'Batal ubah saldo' : 'Ubah saldo dompet'}
               title={editing ? 'Batal' : 'Sesuaikan saldo dompet'}
             >
-              {editing ? <X size={15} /> : <Pencil size={14} />}
+              {editing ? <X size={16} /> : <Pencil size={15} />}
             </button>
             <button
               type="button"
@@ -77,13 +75,13 @@ const HeroCard = ({ onNavigate }) => {
               onClick={toggleBalanceVisible}
               aria-label={balanceVisible ? 'Sembunyikan saldo' : 'Tampilkan saldo'}
             >
-              {balanceVisible ? <Eye size={15} /> : <EyeOff size={15} />}
+              {balanceVisible ? <Eye size={16} /> : <EyeOff size={16} />}
             </button>
           </div>
         </div>
 
         {editing ? (
-          <form onSubmit={saveEdit} style={{ display: 'flex', gap: 8 }}>
+          <form onSubmit={saveEdit} style={{ display: 'flex', margin: '26px 0 10px' }}>
             <input
               type="number"
               inputMode="numeric"
@@ -92,43 +90,56 @@ const HeroCard = ({ onNavigate }) => {
               onChange={(e) => setDraft(e.target.value)}
               aria-label="Saldo dompet baru (Rupiah)"
               autoFocus
-              style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.125rem' }}
+              style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', borderColor: 'var(--paper)', borderRight: 'none' }}
             />
-            <button type="submit" className="btn btn-primary" style={{ padding: '0 14px', boxShadow: 'var(--shadow-xs)' }}>
+            <button
+              type="submit"
+              className="btn"
+              style={{ padding: '0 16px', fontSize: '0.75rem', backgroundColor: 'var(--red)', borderColor: 'var(--paper)', color: '#FFFFFF' }}
+            >
               <Check size={16} /> Simpan
             </button>
           </form>
         ) : (
-          <div
-            className="amount"
-            style={{ fontSize: 'clamp(1.9rem, 9vw, 2.75rem)', lineHeight: 1.05, letterSpacing: '-0.05em' }}
-          >
-            {show(walletBalance)}
+          <div className="hero-amount">
+            {balanceVisible ? (
+              <>
+                <span className="hero-currency">Rp</span>
+                <span>{digits(walletBalance)}</span>
+              </>
+            ) : (
+              <span>{MASK}</span>
+            )}
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 'auto' }}>
-          <div className="stat-box" style={{ backgroundColor: 'var(--color-income-bg)' }}>
-            <div className="stat-label">
-              <TrendingUp size={13} /> Masuk bulan ini
-            </div>
+        <div className="kicker" style={{ color: 'var(--concrete)' }}>
+          Bisa dipakai. Satu sumber dana.
+        </div>
+
+        <div className="hero-stats">
+          <div>
+            <div className="kicker">+ Masuk bln ini</div>
             <div className="stat-value">{show(income)}</div>
           </div>
-          <div className="stat-box" style={{ backgroundColor: 'var(--color-expense-bg)' }}>
-            <div className="stat-label">
-              <TrendingDown size={13} /> Keluar bulan ini
-            </div>
-            <div className="stat-value">{show(expense)}</div>
+          <div>
+            <div className="kicker">− Keluar bln ini</div>
+            <div className="stat-value" style={{ color: 'var(--red)' }}>{show(expense)}</div>
           </div>
         </div>
       </section>
 
-      {/* Net worth and what it is made of */}
-      <section className="block" style={{ backgroundColor: 'var(--block-pink)', padding: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-          <span className="section-title" style={{ marginBottom: 0 }}>Total kekayaan</span>
-          <span className="amount" style={{ fontSize: '1.375rem' }}>{show(netWorth)}</span>
+      {/* 02: net worth and what it is made of */}
+      <section className="poster poster-red">
+        <div className="poster-top">
+          <div>
+            <div className="kicker">02 — Total kekayaan</div>
+            <div className="rule" />
+          </div>
+          <span className="vertical-text" aria-hidden="true" style={{ position: 'absolute', top: 20, right: 14 }}>Net worth</span>
         </div>
+
+        <div className="worth-amount">{show(netWorth)}</div>
 
         {netWorth > 0 && (
           <div
@@ -136,7 +147,7 @@ const HeroCard = ({ onNavigate }) => {
             aria-label={composition
               .map((part) => `${part.label} ${Math.round((part.value / netWorth) * 100)}%`)
               .join(', ')}
-            style={{ display: 'flex', height: 22, border: '2px solid var(--ink)', backgroundColor: '#FFFFFF', margin: '12px 0' }}
+            style={{ display: 'flex', height: 20, border: '2px solid var(--ink)', marginBottom: 14 }}
           >
             {composition
               .filter((part) => part.value > 0)
@@ -155,29 +166,31 @@ const HeroCard = ({ onNavigate }) => {
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 6, marginTop: netWorth > 0 ? 0 : 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 8 }}>
           {composition.map((part) => (
-            <div key={part.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8125rem' }}>
+            <div key={part.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ width: 12, height: 12, flexShrink: 0, backgroundColor: part.color, border: '2px solid var(--ink)' }} />
-              <span style={{ fontWeight: 700 }}>{part.label}</span>
-              <span style={{ fontSize: '0.6875rem', flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {part.hint}
+              <span className="kicker" style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {part.label} <span style={{ fontWeight: 500, letterSpacing: '0.06em' }}>/ {part.hint}</span>
               </span>
-              <span className="amount" style={{ fontSize: '0.8125rem' }}>{show(part.value)}</span>
+              <span className="amount" style={{ fontSize: '1rem' }}>{show(part.value)}</span>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Investments & savings held outside the wallet */}
-      <section className="block" style={{ backgroundColor: '#FFFFFF', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', borderBottom: '2px solid var(--ink)' }}>
-          <h3>Investasi & simpanan</h3>
+      {/* 03: investments & savings held outside the wallet */}
+      <section className="poster poster-paper" style={{ borderTop: '2px solid var(--ink)' }}>
+        <div className="poster-top" style={{ alignItems: 'center', marginBottom: 14 }}>
+          <div>
+            <div className="kicker">03 — Investasi & simpanan</div>
+            <div className="rule" />
+          </div>
           {onNavigate && (
             <button
               type="button"
               className="btn btn-ghost"
-              style={{ padding: '4px 10px', fontSize: '0.75rem', boxShadow: 'var(--shadow-xs)' }}
+              style={{ padding: '6px 12px', fontSize: '0.6875rem' }}
               onClick={() => onNavigate('analytics')}
             >
               Kelola <ArrowRight size={13} />
@@ -186,46 +199,29 @@ const HeroCard = ({ onNavigate }) => {
         </div>
 
         {investments.length === 0 ? (
-          <p style={{ padding: '16px 14px', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+          <p style={{ padding: '14px 0', borderTop: '2px solid var(--ink)', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
             Belum ada aset. Tambahkan lewat <strong>Kelola</strong>.
           </p>
         ) : (
           investments.map((inv, index) => (
-            <div
-              key={inv.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '11px 14px',
-                borderTop: index === 0 ? 'none' : '2px solid var(--ink)',
-              }}
-            >
-              <div
-                style={{
-                  width: 34,
-                  height: 34,
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: inv.colorBg || 'var(--paper-deep)',
-                  border: '2px solid var(--ink)',
-                  borderRadius: 'var(--radius-sm)',
-                }}
-              >
-                <AppIcon name={inv.iconName || 'TrendingUp'} size={16} color="var(--ink)" />
-              </div>
+            <div key={inv.id} className="asset-row">
+              <span className="asset-index" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <AppIcon name={inv.iconName || 'TrendingUp'} size={18} color="var(--ink)" />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.875rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{ fontWeight: 800, fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {inv.name}
                 </div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--text-secondary)' }}>{inv.type}</div>
+                <div className="kicker" style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>{inv.type}</div>
               </div>
-              <div className="amount" style={{ fontSize: '0.9375rem' }}>{show(inv.amount)}</div>
+              <div className="amount" style={{ fontSize: '1.25rem' }}>{show(inv.amount)}</div>
             </div>
           ))
         )}
+
+        <div style={{ borderTop: '2px solid var(--ink)', paddingTop: 12, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+          <span className="kicker" style={{ fontSize: '0.5625rem' }}>Tidak dipakai belanja</span>
+          <div className="barcode" aria-hidden="true" style={{ width: 96, height: 22 }} />
+        </div>
       </section>
     </motion.div>
   );
