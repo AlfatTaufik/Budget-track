@@ -17,10 +17,13 @@ const Toast = () => {
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           style={{
+            // Centered with auto margins: framer-motion owns `transform`, so translateX(-50%) would be overwritten
             position: 'fixed',
             top: 16,
-            left: '50%',
-            transform: 'translateX(-50%)',
+            left: 0,
+            right: 0,
+            width: 'fit-content',
+            margin: '0 auto',
             zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
