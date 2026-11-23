@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import {
@@ -139,6 +139,12 @@ const AnalyticsPage = () => {
   const getNetWorth = useStore((s) => s.getNetWorth);
   const investments = useStore((s) => s.investments);
   const updateInvestment = useStore((s) => s.updateInvestment);
+  const refreshMarketPrices = useStore((s) => s.refreshMarketPrices);
+
+  // Re-value market-priced investments when the page opens (throttled to 5 minutes in the store)
+  useEffect(() => {
+    refreshMarketPrices();
+  }, [refreshMarketPrices]);
   const deleteInvestment = useStore((s) => s.deleteInvestment);
   const expenseCategories = useStore((s) => s.expenseCategories || []);
   const incomeCategories = useStore((s) => s.incomeCategories || []);

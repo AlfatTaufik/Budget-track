@@ -3,6 +3,14 @@ import { persist } from 'zustand/middleware';
 import { DEFAULT_TAGS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, MAIN_WALLET_ID, INVESTMENT_TYPE_STYLES } from '../utils/categories';
 import * as db from '../lib/db';
 import supabase from '../lib/supabase';
+import { marketValueIdr, mergeTopUp } from '../utils/marketValue';
+import { fromDbInvestment, toDbInvestment } from '../lib/investmentMapping';
+
+// Market prices are refreshed at most this often unless forced (matches the /api/price cache)
+const PRICE_REFRESH_MS = 5 * 60 * 1000;
+
+// A market-priced investment needs a symbol and a usable unit count; anything else stays manual
+const isMarketPriced = (inv) => Boolean(inv?.symbol) && Number.isFinite(inv.units) && inv.units >= 0;
 
 // Helper to verify if user ID is a valid Supabase UUID
 const isValidUUID = (str) =>
@@ -241,9 +249,7 @@ const useStore = create(
             color: g.color || '#0E0E0E',
           }));
 
-          let formattedInvestments = (investments || []).map((inv) =>
-            withInvestmentStyle({ ...inv, amount: parseFloat(inv.amount) })
-          );
+          let formattedInvestments = (investments || []).map((inv) => withInvestmentStyle(fromDbInvestment(inv)));
 
           // Single wallet: the 'dompet' row is the only balance. Accounts still on the old
           // multi-wallet model are moved over once, using the opening position.
@@ -271,7 +277,7 @@ const useStore = create(
                       );
                       formattedInvestments = [
                         ...formattedInvestments,
-                        withInvestmentStyle({ ...saved, amount: parseFloat(saved.amount) }),
+                        withInvestmentStyle(fromDbInvestment(saved)),
                       ];
                     }
                   }
@@ -294,6 +300,7 @@ const useStore = create(
             incomeCategories: finalIncomeCategories,
             dataLoaded: true,
           });
+          get().refreshMarketPrices({ force: true });
         } catch (error) {
           console.error('Error loading Supabase user data:', error);
           set({ dataLoaded: true });
@@ -609,17 +616,22 @@ const useStore = create(
       },
 
       // --- Investments ---
-      // fromWallet: true = money leaves the wallet, false = record an asset you already own
+      // fromWallet: true = money leaves the wallet, false = record an asset you already own.
+      // amount is always the IDR value; a market-priced investment (symbol + units) costs
+      // units × avgPriceUsd × usdRate when paid from the wallet.
       addInvestment: async ({ fromWallet = false, ...invData }) => {
         const user = get().user;
         const tempId = `inv_${Date.now()}`;
         const newInv = withInvestmentStyle({ ...invData, id: tempId });
+        const cost = isMarketPriced(invData) && invData.avgPriceUsd > 0
+          ? Math.round(invData.units * invData.avgPriceUsd * get().usdRate)
+          : invData.amount;
         const transferTx = fromWallet
           ? {
               id: `tx_${Date.now()}`,
               type: 'transfer',
               category: 'transfer',
-              amount: invData.amount,
+              amount: cost,
               wallet: MAIN_WALLET_ID,
               toWallet: 'investasi',
               note: `Investasi: ${invData.name} (${invData.type})`,
@@ -629,7 +641,7 @@ const useStore = create(
 
         set((state) => ({
           investments: [...state.investments, newInv],
-          walletBalance: state.walletBalance - (fromWallet ? invData.amount : 0),
+          walletBalance: state.walletBalance - (fromWallet ? cost : 0),
           transactions: transferTx ? [transferTx, ...state.transactions] : state.transactions,
         }));
 
@@ -637,11 +649,7 @@ const useStore = create(
 
         if (user && isValidUUID(user.id)) {
           try {
-            const saved = await db.insertInvestment({
-              name: invData.name,
-              type: invData.type,
-              amount: invData.amount,
-            }, user.id);
+            const saved = await db.insertInvestment(toDbInvestment(invData), user.id);
 
             if (saved?.id) {
               set((state) => ({
@@ -733,6 +741,125 @@ const useStore = create(
           } catch (error) {
             console.error('Failed to sync top up investment in Supabase:', error);
           }
+        }
+      },
+
+      // Sets (or converts to) a market-priced position: symbol, units and average buy price in USD
+      updateInvestmentPosition: async (invId, { symbol, units, avgPriceUsd }) => {
+        const user = get().user;
+        const inv = get().investments.find((i) => i.id === invId);
+        if (!inv || !symbol || !(units >= 0) || !(avgPriceUsd > 0)) return;
+
+        // Until a fresh price arrives, value the position at its last price for the same symbol, else at cost
+        const price = inv.symbol === symbol && inv.lastPriceUsd ? inv.lastPriceUsd : avgPriceUsd;
+        const amount = marketValueIdr(units, price, get().usdRate);
+        set((state) => ({
+          investments: state.investments.map((i) =>
+            i.id === invId
+              ? { ...i, symbol, units, avgPriceUsd, amount, lastPriceUsd: i.symbol === symbol ? i.lastPriceUsd : undefined }
+              : i
+          ),
+        }));
+        get().showToast(`Posisi ${symbol} berhasil disimpan! 📈`);
+
+        if (user && isValidUUID(user.id)) {
+          try {
+            await db.updateInvestmentPosition(invId, { symbol, units, avg_price_usd: avgPriceUsd, amount }, user.id);
+          } catch (error) {
+            console.error('Failed to update investment position in Supabase:', error);
+          }
+        }
+        await get().refreshMarketPrices({ force: true });
+      },
+
+      // Buys more units of a market-priced investment; the wallet pays addUnits × addPriceUsd × usdRate
+      topUpMarketInvestment: async (invId, addUnits, addPriceUsd, fromWallet = true) => {
+        const user = get().user;
+        const inv = get().investments.find((i) => i.id === invId);
+        if (!isMarketPriced(inv) || !(addUnits > 0) || !(addPriceUsd > 0)) return;
+
+        const usdRate = get().usdRate;
+        const merged = mergeTopUp({ units: inv.units, avgPriceUsd: inv.avgPriceUsd }, addUnits, addPriceUsd);
+        const amount = marketValueIdr(merged.units, inv.lastPriceUsd || addPriceUsd, usdRate);
+        const cost = Math.round(addUnits * addPriceUsd * usdRate);
+        const transferTx = fromWallet
+          ? {
+              id: `tx_${Date.now()}`,
+              type: 'transfer',
+              category: 'transfer',
+              amount: cost,
+              wallet: MAIN_WALLET_ID,
+              toWallet: 'investasi',
+              note: `Top Up Investasi: ${inv.name}`,
+              date: new Date().toISOString(),
+            }
+          : null;
+
+        set((state) => ({
+          investments: state.investments.map((i) => (i.id === invId ? { ...i, ...merged, amount } : i)),
+          walletBalance: state.walletBalance - (fromWallet ? cost : 0),
+          transactions: transferTx ? [transferTx, ...state.transactions] : state.transactions,
+        }));
+        get().showToast(`Top up ${inv.symbol} ${addUnits.toLocaleString('id-ID')} unit berhasil! 📈`);
+
+        if (user && isValidUUID(user.id)) {
+          try {
+            await db.updateInvestmentPosition(invId, { units: merged.units, avg_price_usd: merged.avgPriceUsd, amount }, user.id);
+            if (transferTx) {
+              await db.upsertWalletBalance(MAIN_WALLET_ID, get().walletBalance, user.id);
+              await db.insertTransaction({
+                type: 'transfer',
+                amount: cost,
+                category: 'transfer',
+                wallet: MAIN_WALLET_ID,
+                note: `[Transfer ke investasi] Top Up ${inv.name}`,
+                date: transferTx.date,
+              }, user.id).catch(console.warn);
+            }
+          } catch (error) {
+            console.error('Failed to sync market top up to Supabase:', error);
+          }
+        }
+      },
+
+      // Re-values market-priced investments from /api/price. Never touches the wallet; on failure
+      // nothing changes except priceError, so totals keep their last known values.
+      refreshMarketPrices: async ({ force = false } = {}) => {
+        const { investments, priceUpdatedAt } = get();
+        const market = investments.filter(isMarketPriced);
+        if (market.length === 0) return;
+        if (!force && priceUpdatedAt && Date.now() - new Date(priceUpdatedAt).getTime() < PRICE_REFRESH_MS) return;
+
+        const symbols = [...new Set(market.map((i) => i.symbol))];
+        try {
+          const res = await fetch(`/api/price?symbols=${encodeURIComponent(symbols.join(','))}`);
+          if (!res.ok) throw new Error(`Harga tidak tersedia (${res.status})`);
+          const { prices } = await res.json();
+          const usdRate = get().usdRate;
+          const changed = [];
+
+          set((state) => ({
+            investments: state.investments.map((inv) => {
+              const price = isMarketPriced(inv) ? prices?.[inv.symbol] : undefined;
+              if (!(price > 0)) return inv;
+              const amount = marketValueIdr(inv.units, price, usdRate);
+              if (amount !== inv.amount) changed.push({ id: inv.id, amount });
+              return { ...inv, lastPriceUsd: price, amount };
+            }),
+            priceUpdatedAt: new Date().toISOString(),
+            priceError: null,
+          }));
+
+          const user = get().user;
+          if (user && isValidUUID(user.id)) {
+            for (const { id, amount } of changed) {
+              await db.updateInvestmentPosition(id, { amount }, user.id).catch((err) =>
+                console.warn('Failed to save market value:', err)
+              );
+            }
+          }
+        } catch (error) {
+          set({ priceError: error?.message || 'Harga tidak tersedia' });
         }
       },
 
@@ -943,18 +1070,22 @@ const useStore = create(
       },
 
       // --- Currency & Rates ---
+      // usdRate is persisted, so a failed fetch keeps the last known rate (16,250 only before the first success)
       usdRate: 16250,
+      usdRateUpdatedAt: null,
+      priceUpdatedAt: null,
+      priceError: null,
       fetchUsdRate: async () => {
         try {
           const res = await fetch('https://open.er-api.com/v6/latest/USD');
           if (res.ok) {
             const data = await res.json();
             if (data?.rates?.IDR) {
-              set({ usdRate: Math.round(data.rates.IDR) });
+              set({ usdRate: Math.round(data.rates.IDR), usdRateUpdatedAt: new Date().toISOString() });
             }
           }
         } catch (e) {
-          console.warn('Could not fetch live USD rate, using default 16,250:', e);
+          console.warn('Could not fetch live USD rate, keeping the last known rate:', e);
         }
       },
 
@@ -1250,6 +1381,9 @@ const useStore = create(
         investments: state.investments,
         walletBalance: state.walletBalance,
         hiddenExpenseCategories: state.hiddenExpenseCategories,
+        usdRate: state.usdRate,
+        usdRateUpdatedAt: state.usdRateUpdatedAt,
+        priceUpdatedAt: state.priceUpdatedAt,
       }),
     }
   )
