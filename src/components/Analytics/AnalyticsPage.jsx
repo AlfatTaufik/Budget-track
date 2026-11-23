@@ -29,6 +29,7 @@ import { formatIDR, formatCompact, formatDateShort } from '../../utils/formatter
 import AppIcon from '../Common/AppIcon';
 import AddInvestmentModal from '../Modal/AddInvestmentModal';
 import TopUpInvestmentModal from '../Modal/TopUpInvestmentModal';
+import MarketPositionModal from '../Modal/MarketPositionModal';
 
 const RADIAN = Math.PI / 180;
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -166,6 +167,7 @@ const AnalyticsPage = () => {
   const [editingInv, setEditingInv] = useState(null);
   const [invInput, setInvInput] = useState('');
   const [topUpInv, setTopUpInv] = useState(null);
+  const [positionInv, setPositionInv] = useState(null);
   const [showHiddenList, setShowHiddenList] = useState(true);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(null); // Filter transactions by category
 
@@ -1379,8 +1381,31 @@ const AnalyticsPage = () => {
                       >
                         <Plus size={11} /> Top Up
                       </button>
+                      {!inv.symbol && (inv.type === 'ETF' || inv.type === 'Saham') && (
+                        <button
+                          type="button"
+                          onClick={() => setPositionInv(inv)}
+                          style={{
+                            padding: '3px 8px',
+                            backgroundColor: '#FFFFFF',
+                            border: '2px solid var(--border-subtle)',
+                            borderRadius: 'var(--radius-full)',
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.6875rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                          title="Hubungkan ke harga bursa AS"
+                        >
+                          Atur harga otomatis
+                        </button>
+                      )}
                       <button
                         onClick={() => {
+                          if (inv.symbol) {
+                            setPositionInv(inv);
+                            return;
+                          }
                           setEditingInv(inv.id);
                           setInvInput(inv.amount.toString());
                         }}
@@ -1497,6 +1522,7 @@ const AnalyticsPage = () => {
       <AnimatePresence>
         {showAddInv && <AddInvestmentModal onClose={() => setShowAddInv(false)} />}
         {topUpInv && <TopUpInvestmentModal inv={topUpInv} onClose={() => setTopUpInv(null)} />}
+        {positionInv && <MarketPositionModal inv={positionInv} onClose={() => setPositionInv(null)} />}
       </AnimatePresence>
     </div>
   );

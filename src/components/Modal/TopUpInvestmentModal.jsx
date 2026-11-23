@@ -5,24 +5,36 @@ import useStore from '../../store/useStore';
 import { WALLETS, MAIN_WALLET_ID } from '../../utils/categories';
 import { formatIDR } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
+import { marketValueIdr, parseDecimalInput } from '../../utils/marketValue';
 
 const TopUpInvestmentModal = ({ inv, onClose }) => {
   const topUpInvestment = useStore((s) => s.topUpInvestment);
+  const topUpMarketInvestment = useStore((s) => s.topUpMarketInvestment);
   const walletBalance = useStore((s) => s.walletBalance) || 0;
+  const usdRate = useStore((s) => s.usdRate);
   const [amount, setAmount] = useState('');
+  const [addUnits, setAddUnits] = useState('');
+  const [addPrice, setAddPrice] = useState(inv?.lastPriceUsd ? String(inv.lastPriceUsd) : '');
   const [sourceWallet, setSourceWallet] = useState(MAIN_WALLET_ID); // 'none' | MAIN_WALLET_ID
 
   if (!inv) return null;
 
-  const parsedAmount = parseFloat(amount) || 0;
-  const newTotal = inv.amount + parsedAmount;
+  const isMarket = Boolean(inv.symbol);
+  const parsedUnits = parseDecimalInput(addUnits);
+  const parsedPrice = parseDecimalInput(addPrice);
+  const marketCost = parsedUnits > 0 && parsedPrice > 0 ? Math.round(parsedUnits * parsedPrice * usdRate) : 0;
+  const parsedAmount = isMarket ? marketCost : parseFloat(amount) || 0;
+  const newTotal = isMarket && marketCost > 0
+    ? marketValueIdr(inv.units + parsedUnits, inv.lastPriceUsd || parsedPrice, usdRate)
+    : inv.amount + parsedAmount;
   const selectedWalletObj = WALLETS.find((w) => w.id === sourceWallet);
 
   const handleSave = (e) => {
     e.preventDefault();
     if (parsedAmount <= 0) return;
 
-    topUpInvestment(inv.id, parsedAmount, sourceWallet !== 'none');
+    if (isMarket) topUpMarketInvestment(inv.id, parsedUnits, parsedPrice, sourceWallet !== 'none');
+    else topUpInvestment(inv.id, parsedAmount, sourceWallet !== 'none');
     onClose();
   };
 
@@ -89,6 +101,23 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
         </div>
 
         <form onSubmit={handleSave} style={{ marginTop: 14 }}>
+          {isMarket ? (
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
+                  Unit tambahan ({inv.symbol})
+                </label>
+                <input type="text" inputMode="decimal" placeholder="Contoh: 0,5" value={addUnits} onChange={(e) => setAddUnits(e.target.value)} autoFocus />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
+                  Harga per unit (USD)
+                </label>
+                <input type="text" inputMode="decimal" placeholder="Contoh: 610,04" value={addPrice} onChange={(e) => setAddPrice(e.target.value)} />
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Quick Add Chips */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
             {[
@@ -137,6 +166,8 @@ const TopUpInvestmentModal = ({ inv, onClose }) => {
               autoFocus
             />
           </div>
+          </>
+          )}
 
           {/* New Total Preview Card */}
           {parsedAmount > 0 && (

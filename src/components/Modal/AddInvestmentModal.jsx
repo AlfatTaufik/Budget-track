@@ -5,30 +5,57 @@ import useStore from '../../store/useStore';
 import { WALLETS, MAIN_WALLET_ID, INVESTMENT_TYPES } from '../../utils/categories';
 import { formatIDR } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
+import MarketPositionFields, { useMarketPosition } from '../Common/MarketPositionFields';
+import { marketValueIdr } from '../../utils/marketValue';
 
 const TYPES = INVESTMENT_TYPES;
+const MARKET_TYPES = ['ETF', 'Saham'];
 
 const AddInvestmentModal = ({ onClose }) => {
   const addInvestment = useStore((s) => s.addInvestment);
   const walletBalance = useStore((s) => s.walletBalance) || 0;
+  const usdRate = useStore((s) => s.usdRate);
 
   const [name, setName] = useState('');
   const [type, setType] = useState(TYPES[0]);
   const [amount, setAmount] = useState('');
   const [sourceWallet, setSourceWallet] = useState(MAIN_WALLET_ID); // 'none' | MAIN_WALLET_ID
+  const [autoPrice, setAutoPrice] = useState(false);
+  const pos = useMarketPosition();
+
+  const isMarket = autoPrice && MARKET_TYPES.includes(type);
 
   const handleReset = () => {
     setName('');
     setType(TYPES[0]);
     setAmount('');
     setSourceWallet(MAIN_WALLET_ID);
+    setAutoPrice(false);
+    pos.setSymbol('');
+    pos.setUnits('');
+    pos.setAvgPrice('');
   };
 
   const handleSave = (e) => {
     e.preventDefault();
-    const parsedAmount = parseFloat(amount);
-    if (!name || isNaN(parsedAmount) || parsedAmount <= 0) return;
+    if (!name) return;
 
+    if (isMarket) {
+      if (!pos.valid) return;
+      addInvestment({
+        name,
+        type,
+        amount: marketValueIdr(pos.parsedUnits, pos.priceUsd, usdRate),
+        ...pos.position,
+        lastPriceUsd: pos.check.status === 'ok' ? pos.check.priceUsd : undefined,
+        fromWallet: sourceWallet !== 'none',
+      });
+      onClose();
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
     addInvestment({
       name,
       type,
@@ -39,7 +66,11 @@ const AddInvestmentModal = ({ onClose }) => {
   };
 
   const selectedWalletObj = WALLETS.find((w) => w.id === sourceWallet);
-  const parsedAmount = parseFloat(amount) || 0;
+  // What leaves the wallet: market positions are paid at the buy price
+  const parsedAmount = isMarket
+    ? (pos.parsedUnits > 0 && pos.parsedAvg > 0 ? Math.round(pos.parsedUnits * pos.parsedAvg * usdRate) : 0)
+    : parseFloat(amount) || 0;
+  const canSave = Boolean(name) && (isMarket ? pos.valid : parsedAmount > 0);
 
   return (
     <motion.div
@@ -144,20 +175,37 @@ const AddInvestmentModal = ({ onClose }) => {
             </div>
           </div>
 
-          {/* Investment Amount */}
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-              Nominal Pembelian / Nilai Aset (Rp)
+          {MARKET_TYPES.includes(type) && (
+            <label
+              style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', cursor: 'pointer' }}
+            >
+              <input
+                type="checkbox"
+                checked={autoPrice}
+                onChange={(e) => setAutoPrice(e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              Harga otomatis (bursa AS)
             </label>
-            <input
-              type="number"
-              placeholder="Contoh: 1000000"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              required
-              min="1"
-            />
-          </div>
+          )}
+
+          {isMarket ? (
+            <MarketPositionFields pos={pos} usdRate={usdRate} />
+          ) : (
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
+                Nominal Pembelian / Nilai Aset (Rp)
+              </label>
+              <input
+                type="number"
+                placeholder="Contoh: 1000000"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+                min="1"
+              />
+            </div>
+          )}
 
           {/* Funding source: from the wallet, or record-only */}
           <div style={{ marginBottom: 16 }}>
@@ -256,7 +304,8 @@ const AddInvestmentModal = ({ onClose }) => {
             <button
               type="submit"
               className="btn btn-primary"
-              style={{ flex: 2, height: 42, padding: '0 16px' }}
+              disabled={!canSave}
+              style={{ flex: 2, height: 42, padding: '0 16px', opacity: canSave ? 1 : 0.5 }}
             >
               <Save size={16} /> Simpan Investasi
             </button>
