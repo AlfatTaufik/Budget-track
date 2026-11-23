@@ -175,6 +175,19 @@ export const updateInvestmentAmount = async (invId, amount, userId) => {
   return data;
 };
 
+// Updates any of amount / symbol / units / avg_price_usd for a market-priced investment
+export const updateInvestmentPosition = async (invId, fields, userId) => {
+  const { data, error } = await supabase
+    .from('investments')
+    .update(fields)
+    .eq('id', invId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
 export const deleteInvestmentById = async (invId, userId) => {
   const { error } = await supabase
     .from('investments')

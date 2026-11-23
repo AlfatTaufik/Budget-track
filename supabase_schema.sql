@@ -60,6 +60,10 @@ CREATE TABLE IF NOT EXISTS investments (
   name TEXT NOT NULL,
   type TEXT NOT NULL,
   amount NUMERIC(15, 2) NOT NULL CHECK (amount >= 0),
+  -- Harga pasar otomatis (kosong = investasi manual); lihat supabase/migrations/20261123_investments_market.sql
+  symbol TEXT,
+  units NUMERIC(20, 8),
+  avg_price_usd NUMERIC(15, 4),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
