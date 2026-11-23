@@ -30,6 +30,7 @@ import AppIcon from '../Common/AppIcon';
 import AddInvestmentModal from '../Modal/AddInvestmentModal';
 import TopUpInvestmentModal from '../Modal/TopUpInvestmentModal';
 import MarketPositionModal from '../Modal/MarketPositionModal';
+import MarketValueLine from '../Common/MarketValueLine';
 
 const RADIAN = Math.PI / 180;
 const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
@@ -141,6 +142,9 @@ const AnalyticsPage = () => {
   const investments = useStore((s) => s.investments);
   const updateInvestment = useStore((s) => s.updateInvestment);
   const refreshMarketPrices = useStore((s) => s.refreshMarketPrices);
+  const usdRate = useStore((s) => s.usdRate);
+  const priceUpdatedAt = useStore((s) => s.priceUpdatedAt);
+  const priceError = useStore((s) => s.priceError);
 
   // Re-value market-priced investments when the page opens (throttled to 5 minutes in the store)
   useEffect(() => {
@@ -1326,6 +1330,7 @@ const AnalyticsPage = () => {
                     <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>
                       {inv.type}
                     </div>
+                    <MarketValueLine inv={inv} usdRate={usdRate} priceUpdatedAt={priceUpdatedAt} priceError={priceError} />
                   </div>
 
                   {isEditing ? (

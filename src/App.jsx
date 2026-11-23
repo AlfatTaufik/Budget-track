@@ -124,6 +124,19 @@ function AppContent() {
     return () => clearTimeout(timer);
   }, [setAuthLoading]);
 
+  // Re-value market investments every 5 minutes, only while the app is open and visible
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === 'visible') useStore.getState().refreshMarketPrices();
+    };
+    const timer = setInterval(tick, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', tick);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', tick);
+    };
+  }, []);
+
   // Loading Screen
   if (authLoading) {
     return (

@@ -4,6 +4,7 @@ import { Eye, EyeOff, Pencil, Check, X, ArrowRight } from 'lucide-react';
 import useStore from '../../store/useStore';
 import { formatIDR } from '../../utils/formatters';
 import AppIcon from '../Common/AppIcon';
+import MarketValueLine from '../Common/MarketValueLine';
 
 const MASK = '••••••';
 const digits = (value) => formatIDR(value).replace(/^Rp\s?/, '');
@@ -16,6 +17,9 @@ const HeroCard = ({ onNavigate }) => {
   const getMonthlyStats = useStore((s) => s.getMonthlyStats);
   const balanceVisible = useStore((s) => s.balanceVisible);
   const toggleBalanceVisible = useStore((s) => s.toggleBalanceVisible);
+  const usdRate = useStore((s) => s.usdRate);
+  const priceUpdatedAt = useStore((s) => s.priceUpdatedAt);
+  const priceError = useStore((s) => s.priceError);
 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState('');
@@ -212,6 +216,7 @@ const HeroCard = ({ onNavigate }) => {
                   {inv.name}
                 </div>
                 <div className="kicker" style={{ fontSize: '0.5625rem', color: 'var(--text-muted)' }}>{inv.type}</div>
+                <MarketValueLine inv={inv} usdRate={usdRate} priceUpdatedAt={priceUpdatedAt} priceError={priceError} hidden={!balanceVisible} compact />
               </div>
               <div className="amount" style={{ fontSize: '1.25rem' }}>{show(inv.amount)}</div>
             </div>
