@@ -1,17 +1,51 @@
-# React + Vite
+# Nusa Track
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A personal finance tracker: one spendable wallet, investments kept separate, and monthly budget envelopes. The interface is in Indonesian.
 
-Currently, two official plugins are available:
+**Live:** https://budget-track-chi.vercel.app (choose **Masuk Mode Demo** to try it without an account)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![Nusa Track home screen with sample data](docs/home.webp)
 
-## React Compiler
+| Analytics | Budget envelopes |
+|---|---|
+| ![Monthly analytics](docs/analytics.webp) | ![Budget envelopes](docs/budgets.webp) |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+All numbers in the screenshots are sample data.
 
-## Expanding the Oxlint configuration
+## What it does
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
-# Budget-track
+- Records income, expenses and transfers into investments, with categories, notes and search.
+- Separates money you can spend from money you have invested, and adds them up as net worth.
+- Compares spending over six months and breaks each month down by category. Categories can be left out of the totals.
+- Tracks budget envelopes and warns from 80% of the limit.
+- Keeps savings goals with a target amount.
+- Works on phone and desktop.
+
+## How it works
+
+- **State:** one [Zustand store](src/store/useStore.js), persisted to localStorage. Changes show immediately and are then written to Supabase.
+- **Demo mode:** uses the same store but never writes to the database.
+- **Data access:** each table's queries are in [src/lib/db.js](src/lib/db.js).
+- **Security:** every table has row level security, so a user can only read and change their own rows. See [supabase_schema.sql](supabase_schema.sql).
+- **Design:** black, paper and red with poster-size numbers. The rules are in [style.md](style.md).
+
+**Stack:** React 19, Vite, Zustand, Supabase (Auth and Postgres), Recharts, Framer Motion.
+
+## Run it locally
+
+```bash
+npm install
+npm run dev
+```
+
+To use your own database, run `supabase_schema.sql` in the Supabase SQL editor and create `.env.local`:
+
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-publishable-key
+```
+
+## Known limits
+
+- If a write to Supabase fails, the change stays on the device and is not retried.
+- There are no automated tests yet.
