@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { DEFAULT_TAGS, EXPENSE_CATEGORIES, INCOME_CATEGORIES, MAIN_WALLET_ID, INVESTMENT_TYPE_STYLES } from '../utils/categories';
+import { legacyWalletTotal, txToIdr, walletDelta } from '../utils/wallet';
 import * as db from '../lib/db';
 import supabase from '../lib/supabase';
 
@@ -8,29 +9,6 @@ import supabase from '../lib/supabase';
 const isValidUUID = (str) =>
   typeof str === 'string' &&
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-
-// --- Single Wallet Helpers ---
-// The app has exactly one spendable wallet. Legacy transactions may still carry old wallet ids / USD amounts.
-const txToIdr = (tx, usdRate) =>
-  tx.wallet === 'paypal' || tx.currency === 'USD' ? tx.amount * (tx.exchangeRate || usdRate) : tx.amount;
-
-// Effect of a transaction on the wallet balance (legacy wallet-to-wallet transfers are net zero)
-const walletDelta = (tx, usdRate) => {
-  const idr = txToIdr(tx, usdRate);
-  if (tx.type === 'income') return idr;
-  if (tx.type === 'expense') return -idr;
-  if (tx.type === 'transfer') return !tx.toWallet || tx.toWallet === 'investasi' ? -idr : 0;
-  return 0;
-};
-
-// One-time opening position applied when an existing account moves to the single wallet model
-const OPENING_POSITION = {
-  walletBalance: 1500000,
-  investments: [
-    { match: /etf/i, name: 'ETF', type: 'ETF', amount: 19400000 },
-    { match: /sea\s*bank/i, name: 'SeaBank', type: 'Tabungan', amount: 1000000 },
-  ],
-};
 
 const withInvestmentStyle = (inv) => {
   const style = INVESTMENT_TYPE_STYLES[inv.type] || INVESTMENT_TYPE_STYLES['Lainnya'];
@@ -150,7 +128,7 @@ const useStore = create(
           const [transactions, budgets, goals, walletBalances, investments, remoteCategories] = await Promise.all([
             db.fetchTransactions(userId).catch((err) => {
               console.warn('fetchTransactions error:', err);
-              return [];
+              return null;
             }),
             db.fetchBudgets(userId).catch((err) => {
               console.warn('fetchBudgets error:', err);
@@ -241,45 +219,26 @@ const useStore = create(
             color: g.color || '#0E0E0E',
           }));
 
-          let formattedInvestments = (investments || []).map((inv) =>
+          const formattedInvestments = (investments || []).map((inv) =>
             withInvestmentStyle({ ...inv, amount: parseFloat(inv.amount) })
           );
 
           // Single wallet: the 'dompet' row is the only balance. Accounts still on the old
-          // multi-wallet model are moved over once, using the opening position.
+          // multi-wallet model are moved over once, keeping their own total.
           let walletBalance = get().walletBalance || 0;
           if (walletBalances) {
             if (MAIN_WALLET_ID in walletBalances) {
               walletBalance = walletBalances[MAIN_WALLET_ID];
             } else {
-              const hasLegacyData =
-                Object.keys(walletBalances).length > 0 || formattedTxs.length > 0 || formattedInvestments.length > 0;
-              walletBalance = hasLegacyData ? OPENING_POSITION.walletBalance : 0;
-              try {
-                if (hasLegacyData) {
-                  for (const target of OPENING_POSITION.investments) {
-                    const existing = formattedInvestments.find((inv) => target.match.test(inv.name || ''));
-                    if (existing) {
-                      await db.updateInvestmentAmount(existing.id, target.amount, userId);
-                      formattedInvestments = formattedInvestments.map((inv) =>
-                        inv.id === existing.id ? { ...inv, amount: target.amount } : inv
-                      );
-                    } else {
-                      const saved = await db.insertInvestment(
-                        { name: target.name, type: target.type, amount: target.amount },
-                        userId
-                      );
-                      formattedInvestments = [
-                        ...formattedInvestments,
-                        withInvestmentStyle({ ...saved, amount: parseFloat(saved.amount) }),
-                      ];
-                    }
-                  }
+              const total = legacyWalletTotal(walletBalances, transactions && formattedTxs, get().usdRate || 16250);
+              if (total !== null) {
+                walletBalance = total;
+                try {
+                  await db.upsertWalletBalance(MAIN_WALLET_ID, walletBalance, userId);
+                  await db.deleteLegacyWalletBalances(MAIN_WALLET_ID, userId);
+                } catch (err) {
+                  console.error('Failed to move account to single wallet:', err);
                 }
-                await db.upsertWalletBalance(MAIN_WALLET_ID, walletBalance, userId);
-                await db.deleteLegacyWalletBalances(MAIN_WALLET_ID, userId);
-              } catch (err) {
-                console.error('Failed to move account to single wallet:', err);
               }
             }
           }

@@ -48,4 +48,4 @@ VITE_SUPABASE_ANON_KEY=your-publishable-key
 ## Known limits
 
 - If a write to Supabase fails, the change stays on the device and is not retried.
-- There are no automated tests yet.
+- Only the wallet calculations have automated tests (`npm test`).
